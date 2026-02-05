@@ -2,6 +2,8 @@
 import { XHSService } from './xhs-service';
 import { DouyinService } from './douyin-service';
 import { DouyinNewService } from './douyin-new-service';
+import { TikHubServiceAdapter } from './tikhub-service';
+import { TikTokServiceAdapter } from './tiktok-service';
 import { IDataSourceService, DataSourceType, DataSourceResult, DeepCrawlResult, DeepCrawlOptions, DouyinNewCrawlOptions } from './data-source-interface';
 
 // XHS服务适配器
@@ -99,27 +101,54 @@ export class DataSourceFactory {
         return new DouyinServiceAdapter();
       case 'douyin_new':
         return new DouyinNewServiceAdapter();
+      case 'tikhub':
+        return new TikHubServiceAdapter();
+      case 'tiktok':
+        return new TikTokServiceAdapter();
       default:
         throw new Error(`不支持的数据源类型: ${type}`);
     }
   }
 
   static getSupportedSources(): DataSourceType[] {
-    return ['xiaohongshu', 'douyin', 'douyin_new'];
+    return ['xiaohongshu', 'douyin', 'douyin_new', 'tikhub', 'tiktok'];
   }
 
   static getSourceDisplayName(type: DataSourceType): string {
     const names: Record<DataSourceType, string> = {
       'xiaohongshu': '小红书',
       'douyin': '抖音',
-      'douyin_new': '新版抖音'
+      'douyin_new': '新版抖音',
+      'tikhub': 'TikHub API (推荐)',
+      'tiktok': 'TikTok API'
     };
     return names[type] || type;
   }
 
+  static getSourceDescription(type: DataSourceType): string {
+    const descriptions: Record<DataSourceType, string> = {
+      'xiaohongshu': '小红书数据源（当前暂停）',
+      'douyin': '旧版抖音爬虫（免费，可能不稳定）',
+      'douyin_new': '新版抖音爬虫（免费，需要扫码登录）',
+      'tikhub': 'TikHub API（稳定快速，按需付费）',
+      'tiktok': 'TikTok API（国际版，按需付费）'
+    };
+    return descriptions[type] || '';
+  }
+
   static supportsDeepCrawl(type: DataSourceType): boolean {
-    // 抖音和新版抖音都支持深度抓取
-    return type === 'douyin' || type === 'douyin_new';
+    // TikHub、TikTok、抖音和新版抖音都支持深度抓取
+    return type === 'douyin' || type === 'douyin_new' || type === 'tikhub' || type === 'tiktok';
+  }
+
+  // TikHub专用：创建TikHub数据源
+  static createTikHubDataSource(): TikHubServiceAdapter {
+    return new TikHubServiceAdapter();
+  }
+
+  // TikTok专用：创建TikTok数据源
+  static createTikTokDataSource(): TikTokServiceAdapter {
+    return new TikTokServiceAdapter();
   }
 
   // 新版抖音专用：带完整选项的创建方法

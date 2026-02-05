@@ -37,8 +37,9 @@ A web application that helps indie developers automatically discover user pain p
 
 | Source | Status | Description |
 |--------|--------|-------------|
-| Douyin - Legacy | Available | Based on DrissionPage browser automation, supports video search and comment collection |
+| TikHub API | **Recommended** | Stable data acquisition service based on TikHub API, no login required, pay per use |
 | Douyin - New | Available | Based on Playwright + CDP, better anti-detection, requires QR code login on first use |
+| Douyin - Legacy | Available | Based on DrissionPage browser automation, supports video search and comment collection |
 | Xiaohongshu | Paused | Testing found it causes account bans, not recommended |
 
 ## Preview
@@ -93,6 +94,14 @@ GLM_API_KEY=your_glm_api_key_here
 GLM_MODEL_NAME=glm-4.6
 GLM_EMBEDDING_MODEL=embedding-3
 
+# TikHub API Configuration (Recommended)
+# Register at: https://api.tikhub.io/
+TIKHUB_API_TOKEN=your_tikhub_api_token_here
+# Use China domain (optional)
+TIKHUB_USE_CHINA_DOMAIN=false
+# Enable cache (24-hour cache reduces costs)
+TIKHUB_ENABLE_CACHE=true
+
 # Browser Configuration (set to true for server environments)
 HEADLESS=false
 ```
@@ -114,12 +123,14 @@ Visit http://localhost:3000
 
 ### Pain Point Analysis (Home Page)
 
-1. Select data source (New Douyin recommended)
+1. Select data source (TikHub API recommended)
 2. Enter keywords, separated by commas, e.g., `camping, beginner, gear`
 3. Optionally enable video comment fetching (slower but richer data)
 4. Click Start Analysis and wait for results
 5. Click any row to view detailed source content, or export CSV
 
+> **TikHub API Note**: Based on TikHub API data acquisition service, no login required, pay per use. Each analysis costs approximately ¥0.01-0.5, depending on data volume.
+>
 > **New Douyin Note**: On first use, a browser window will pop up requiring QR code login to Douyin. Login state is automatically saved for future use.
 
 ### AI Product Suggestions (/ai-product)
@@ -179,6 +190,8 @@ deeppoint-ai/
 │   │   └── douyin_new/           # New Douyin crawler module
 │   ├── services/
 │   │   ├── job-manager.ts        # Job management core
+│   │   ├── tikhub-client.ts      # TikHub API client
+│   │   ├── tikhub-service.ts     # TikHub data source service
 │   │   ├── douyin-service.ts     # Douyin data service
 │   │   ├── xhs-service.ts        # Xiaohongshu service (paused)
 │   │   ├── glm-service.ts        # GLM LLM service
@@ -208,11 +221,18 @@ deeppoint-ai/
 | Internationalization | next-intl |
 | Data Fetching | SWR (job status polling) |
 | Backend | Next.js API Routes |
-| Data Collection | Python + DrissionPage / Playwright |
+| Data Collection | TikHub API / Python + DrissionPage / Playwright |
 | AI Analysis | Zhipu GLM-4.6 (thinking model) + embedding-3 |
 | Clustering Algorithm | Embedding + DBSCAN semantic clustering |
 
 ## API Configuration
+
+### TikHub API (Recommended)
+
+1. Register at: https://api.tikhub.io/
+2. Get API Token
+3. Configure in `TIKHUB_API_TOKEN` environment variable
+4. Pay per request, approximately ¥0.01/request
 
 ### Zhipu AI (Required)
 
@@ -222,11 +242,14 @@ deeppoint-ai/
 
 ## FAQ
 
+### Q: How much does TikHub API cost?
+A: TikHub API charges per request, approximately ¥0.01/request. A typical analysis (3 keywords, 20 videos, 30 comments per video) costs about ¥0.5. Supports 24-hour caching, repeat access is free.
+
 ### Q: Why is Douyin data collection slow?
-A: Douyin uses browser automation to simulate real users, so slower speed is normal. Deep crawling mode is even slower but provides more complete data.
+A: If using browser automation crawler, slower speed is normal. It's recommended to use TikHub API for faster and more stable performance.
 
 ### Q: How to deploy on a server?
-A: Set `HEADLESS=true` environment variable to enable headless browser mode.
+A: Set `HEADLESS=true` environment variable to enable headless browser mode. Using TikHub API doesn't require this configuration.
 
 ### Q: Too few clustering results?
 A: Try more keywords, or adjust the `minClusterSize` parameter in `clustering-service.ts`.
@@ -236,6 +259,7 @@ A: Not recommended. Testing found it causes account bans.
 
 ## Roadmap
 
+- [x] TikHub API data source support
 - [x] Douyin data source support
 - [x] Pain point clustering analysis
 - [x] AI product solution generation

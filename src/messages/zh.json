@@ -22,6 +22,8 @@
   "form": {
     "dataSource": {
       "label": "数据源 / Source",
+      "tiktok": "TikTok API",
+      "tikhub": "TikHub API (推荐)",
       "xiaohongshu": "小红书 - 开发中",
       "douyinOld": "抖音 - 旧版",
       "douyinNew": "抖音 - 新版"
@@ -45,6 +47,15 @@
       "commentsPerVideo": "每视频评论数",
       "subComments": "二级评论",
       "subCommentsDesc": "爬取评论的回复"
+    },
+    "tikhubConfig": {
+      "title": "TikHub API 配置",
+      "description": "基于 TikHub API 的稳定数据获取服务，无需登录，按需付费",
+      "statusAvailable": "API 服务可用",
+      "pricing": "按请求计费，约 ¥0.01/次",
+      "commentsNote": "获取评论数据可提高分析准确性",
+      "costEstimate": "预估成本",
+      "perAnalysis": "/次分析"
     },
     "submit": {
       "analyzing": "正在分析...",

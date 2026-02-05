@@ -37,8 +37,9 @@
 
 | 数据源 | 状态 | 说明 |
 |--------|------|------|
-| 抖音 - 旧版 | 可用 | 基于 DrissionPage 浏览器自动化，支持视频搜索和评论采集 |
+| TikHub API | **推荐** | 基于 TikHub API 的稳定数据获取服务，无需登录，按需付费 |
 | 抖音 - 新版 | 可用 | 基于 Playwright + CDP，反检测能力更强，首次需扫码登录 |
+| 抖音 - 旧版 | 可用 | 基于 DrissionPage 浏览器自动化，支持视频搜索和评论采集 |
 | 小红书 | 暂停 | 测试发现会导致账号被封，暂不建议使用 |
 
 ## 运行预览
@@ -93,6 +94,14 @@ GLM_API_KEY=your_glm_api_key_here
 GLM_MODEL_NAME=glm-4.6
 GLM_EMBEDDING_MODEL=embedding-3
 
+# TikHub API 配置 (推荐使用)
+# 注册地址: https://api.tikhub.io/
+TIKHUB_API_TOKEN=your_tikhub_api_token_here
+# 使用中国域名（可选）
+TIKHUB_USE_CHINA_DOMAIN=false
+# 是否启用缓存（24小时缓存可降低成本）
+TIKHUB_ENABLE_CACHE=true
+
 # 浏览器配置 (服务器环境设为 true)
 HEADLESS=false
 ```
@@ -114,12 +123,14 @@ npm run start
 
 ### 痛点分析（主页）
 
-1. 选择数据源（推荐使用新版抖音）
+1. 选择数据源（推荐使用 TikHub API）
 2. 输入关键词，多个用逗号分隔，如：`露营, 新手, 装备`
 3. 可选开启获取视频评论（更耗时但数据更丰富）
 4. 点击开始分析，等待结果
 5. 点击任意行查看详细原文，或导出 CSV
 
+> **TikHub API 说明**：基于 TikHub API 的数据获取服务，无需登录，按需付费。每次分析约 ¥0.01-0.5，具体取决于数据量。
+>
 > **新版抖音说明**：首次使用时会弹出浏览器窗口，需要扫码登录抖音。登录状态会自动保存，后续无需重复登录。
 
 ### AI 产品建议（/ai-product）
@@ -179,6 +190,8 @@ deeppoint-ai/
 │   │   └── douyin_new/           # 新版抖音爬虫模块
 │   ├── services/
 │   │   ├── job-manager.ts        # 任务管理核心
+│   │   ├── tikhub-client.ts      # TikHub API 客户端
+│   │   ├── tikhub-service.ts     # TikHub 数据源服务
 │   │   ├── douyin-service.ts     # 抖音数据服务
 │   │   ├── xhs-service.ts        # 小红书服务(暂停)
 │   │   ├── glm-service.ts        # GLM大模型服务
@@ -208,11 +221,18 @@ deeppoint-ai/
 | 国际化 | next-intl |
 | 数据请求 | SWR (轮询任务状态) |
 | 后端 | Next.js API Routes |
-| 数据采集 | Python + DrissionPage / Playwright |
+| 数据采集 | TikHub API / Python + DrissionPage / Playwright |
 | AI 分析 | 智谱 GLM-4.6（思考模型）+ embedding-3 |
 | 聚类算法 | 基于 embedding + DBSCAN 语义聚类 |
 
 ## API 配置
+
+### TikHub API (推荐)
+
+1. 注册账号：https://api.tikhub.io/
+2. 获取 API Token
+3. 配置到 `TIKHUB_API_TOKEN` 环境变量
+4. 按请求计费，约 ¥0.01/次
 
 ### 智谱 AI (必需)
 
@@ -222,11 +242,14 @@ deeppoint-ai/
 
 ## 常见问题
 
+### Q: TikHub API 如何收费？
+A: TikHub API 按请求计费，约 ¥0.01/次。一次典型分析（3个关键词，20个视频，每个视频30条评论）大约花费 ¥0.5。支持24小时缓存，重复访问不收费。
+
 ### Q: 抖音数据采集很慢？
-A: 抖音使用浏览器自动化模拟真实用户，速度较慢是正常的。深度抓取模式会更慢但数据更完整。
+A: 如果使用浏览器自动化爬虫，速度较慢是正常的。建议使用 TikHub API，速度更快且更稳定。
 
 ### Q: 如何在服务器部署？
-A: 设置 `HEADLESS=true` 环境变量启用无头浏览器模式。
+A: 设置 `HEADLESS=true` 环境变量启用无头浏览器模式。使用 TikHub API 则无需此配置。
 
 ### Q: 聚类结果太少？
 A: 可以尝试更多关键词，或调整 `clustering-service.ts` 中的 `minClusterSize` 参数。
@@ -236,6 +259,7 @@ A: 暂不建议使用，测试发现会导致账号被封禁。
 
 ## 开发计划
 
+- [x] TikHub API 数据源支持
 - [x] 抖音数据源支持
 - [x] 痛点聚类分析
 - [x] AI 产品方案生成

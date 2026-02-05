@@ -34,20 +34,24 @@ export async function POST(request: NextRequest) {
 
     // 验证数据源
     let validDataSource: DataSourceType;
-    if (dataSource === 'douyin') {
+    if (dataSource === 'tiktok') {
+      validDataSource = 'tiktok';
+    } else if (dataSource === 'tikhub') {
+      validDataSource = 'tikhub';
+    } else if (dataSource === 'douyin') {
       validDataSource = 'douyin';
     } else if (dataSource === 'douyin_new') {
       validDataSource = 'douyin_new';
     } else {
-      validDataSource = 'xiaohongshu';
+      validDataSource = 'tiktok';  // 默认使用 TikTok
     }
 
-    // 深度抓取支持抖音和新版抖音
-    const enableDeepCrawl = deepCrawl && (validDataSource === 'douyin' || validDataSource === 'douyin_new');
+    // 深度抓取支持 TikTok、TikHub、抖音和新版抖音
+    const enableDeepCrawl = deepCrawl && (validDataSource === 'douyin' || validDataSource === 'douyin_new' || validDataSource === 'tikhub' || validDataSource === 'tiktok');
 
-    // 新版抖音的完整配置
+    // TikTok、TikHub 和新版抖音使用相同的配置结构
     let douyinNewOptions: DouyinNewCrawlOptions | undefined;
-    if (validDataSource === 'douyin_new' && douyinNewConfig) {
+    if ((validDataSource === 'tiktok' || validDataSource === 'tikhub' || validDataSource === 'douyin_new') && douyinNewConfig) {
       douyinNewOptions = {
         enableComments: douyinNewConfig.enableComments ?? true,
         maxVideos: douyinNewConfig.maxVideos ?? 15,
@@ -57,6 +61,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 创建分析任务
+    console.log('[API /api/analyze] 准备创建任务:', { validKeywords, validDataSource, douyinNewOptions });
     const jobId = jobManager.createJob(
       validKeywords,
       limit,
@@ -66,6 +71,7 @@ export async function POST(request: NextRequest) {
       douyinNewOptions,
       locale
     );
+    console.log('[API /api/analyze] 任务已创建:', jobId);
 
     // 立即返回任务ID，不等待任务完成
     return NextResponse.json(

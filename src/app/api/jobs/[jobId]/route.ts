@@ -9,6 +9,8 @@ export async function GET(
   try {
     const { jobId } = await params;
 
+    console.log('[API /api/jobs/[jobId]] 查询任务:', jobId);
+
     if (!jobId) {
       return NextResponse.json(
         { error: "任务ID是必需的" },
@@ -20,11 +22,16 @@ export async function GET(
     const job = jobManager.getJob(jobId);
 
     if (!job) {
+      console.error('[API /api/jobs/[jobId]] 任务不存在:', jobId);
+      console.error('[API /api/jobs/[jobId]] 当前任务列表:', jobManager.getAllJobIds());
+      console.error('[API /api/jobs/[jobId]] 任务统计:', jobManager.getJobStats());
       return NextResponse.json(
-        { error: "任务不存在" },
+        { error: "任务不存在。服务器可能已重启，请重新提交分析任务。" },
         { status: 404 }
       );
     }
+
+    console.log('[API /api/jobs/[jobId]] 任务状态:', { jobId, status: job.status, progress: job.progress });
 
     // 构造响应
     const response: {
