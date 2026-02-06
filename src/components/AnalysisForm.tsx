@@ -3,10 +3,10 @@
 import { useState } from "react";
 import { useTranslations } from 'next-intl';
 
-export type DataSourceType = 'xiaohongshu' | 'douyin' | 'douyin_new' | 'tikhub' | 'tiktok';
+export type DataSourceType = 'tikhub' | 'tiktok';
 
-// 新版抖音配置接口
-export interface DouyinNewConfig {
+// TikTok/TikHub 配置接口
+export interface TikTokConfig {
   enableComments: boolean;
   maxVideos: number;
   maxCommentsPerVideo: number;
@@ -19,7 +19,7 @@ interface AnalysisFormProps {
     dataSource: DataSourceType,
     deepCrawl: boolean,
     maxVideos: number,
-    douyinNewConfig?: DouyinNewConfig
+    tiktokConfig?: TikTokConfig
   ) => void;
   isLoading: boolean;
 }
@@ -31,8 +31,8 @@ export default function AnalysisForm({ onSubmit, isLoading }: AnalysisFormProps)
   const [deepCrawl, setDeepCrawl] = useState(false);
   const [maxVideos, setMaxVideos] = useState(5);
 
-  // 新版抖音专用配置
-  const [douyinNewConfig, setDouyinNewConfig] = useState<DouyinNewConfig>({
+  // TikTok/TikHub 通用配置
+  const [tiktokConfig, setTiktokConfig] = useState<TikTokConfig>({
     enableComments: true,
     maxVideos: 15,
     maxCommentsPerVideo: 20,
@@ -53,22 +53,13 @@ export default function AnalysisForm({ onSubmit, isLoading }: AnalysisFormProps)
       .filter(keyword => keyword.length > 0);
 
     if (keywordArray.length > 0) {
-      if (dataSource === 'douyin_new') {
-        onSubmit(keywordArray, dataSource, douyinNewConfig.enableComments, douyinNewConfig.maxVideos, douyinNewConfig);
-      } else if (dataSource === 'tikhub') {
-        // TikHub 使用类似新版抖音的配置
-        onSubmit(keywordArray, dataSource, douyinNewConfig.enableComments, douyinNewConfig.maxVideos, douyinNewConfig);
-      } else {
-        onSubmit(keywordArray, dataSource, deepCrawl, maxVideos);
-      }
+      // TikTok 和 TikHub 使用相同的配置
+      onSubmit(keywordArray, dataSource, tiktokConfig.enableComments, tiktokConfig.maxVideos, tiktokConfig);
     }
   };
 
   const getSourceDisplayName = () => {
     switch (dataSource) {
-      case 'xiaohongshu': return t('dataSource.xiaohongshu');
-      case 'douyin': return t('dataSource.douyinOld');
-      case 'douyin_new': return t('dataSource.douyinNew');
       case 'tikhub': return t('dataSource.tikhub');
       case 'tiktok': return t('dataSource.tiktok');
       default: return dataSource;
@@ -88,7 +79,6 @@ export default function AnalysisForm({ onSubmit, isLoading }: AnalysisFormProps)
             value={dataSource}
             onChange={(e) => {
               const newSource = e.target.value as DataSourceType;
-              if (newSource === 'xiaohongshu') return; // 小红书开发中，不允许选择
               setDataSource(newSource);
             }}
             disabled={isLoading}
@@ -96,9 +86,6 @@ export default function AnalysisForm({ onSubmit, isLoading }: AnalysisFormProps)
           >
             <option value="tiktok">🌟 TikTok</option>
             <option value="tikhub">{t('dataSource.tikhub')}</option>
-            <option value="douyin_new">{t('dataSource.douyinNew')}</option>
-            <option value="douyin">{t('dataSource.douyinOld')}</option>
-            <option value="xiaohongshu" disabled className="text-gray-400">{t('dataSource.xiaohongshu')}</option>
           </select>
           <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-500">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -123,57 +110,6 @@ export default function AnalysisForm({ onSubmit, isLoading }: AnalysisFormProps)
           className="w-full bg-[#FBFBF9] text-[#18181B] font-medium py-3 px-4 rounded-xl border border-transparent outline-none focus:bg-amber-50 focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20 placeholder-gray-400 transition disabled:opacity-50 disabled:cursor-not-allowed"
         />
       </div>
-
-      {/* 旧版抖音配置 */}
-      {dataSource === 'douyin' && (
-        <div className="p-4 bg-[#FBFBF9] rounded-xl space-y-4">
-          {/* 开关 */}
-          <label
-            className="flex items-center justify-between group cursor-pointer"
-          >
-            <div className="pointer-events-none">
-              <span className="block text-sm font-bold text-[#18181B]">{t('deepCrawl.title')}</span>
-              <span className="text-xs text-gray-400">{t('deepCrawl.description')}</span>
-            </div>
-            <div className="relative inline-flex items-center">
-              <input
-                type="checkbox"
-                checked={deepCrawl}
-                onChange={(e) => setDeepCrawl(e.target.checked)}
-                disabled={isLoading}
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#18181B]"></div>
-            </div>
-          </label>
-
-          {/* 滑块控制 */}
-          {deepCrawl && (
-            <div className="pt-2 border-t border-[#E5E4DE]">
-              <div className="flex justify-between items-center mb-3">
-                <label className="text-xs font-bold text-gray-500 uppercase">{t('analysisDepth')}</label>
-                <span className="text-xs font-mono bg-white px-2 py-0.5 rounded shadow-sm">
-                  {maxVideos} {t('units.clips')}
-                </span>
-              </div>
-              <input
-                type="range"
-                id="maxVideos"
-                min="3"
-                max="15"
-                value={maxVideos}
-                onChange={(e) => setMaxVideos(parseInt(e.target.value))}
-                disabled={isLoading}
-                className="w-full"
-              />
-              <div className="flex justify-between text-[10px] text-gray-400 mt-2 font-medium">
-                <span>{t('speedFast')}</span>
-                <span>{t('accuracySlow')}</span>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
 
       {/* TikHub 配置面板 */}
       {dataSource === 'tikhub' && (
@@ -209,8 +145,8 @@ export default function AnalysisForm({ onSubmit, isLoading }: AnalysisFormProps)
               <div className="relative inline-flex items-center">
                 <input
                   type="checkbox"
-                  checked={douyinNewConfig.enableComments}
-                  onChange={(e) => setDouyinNewConfig(prev => ({
+                  checked={tiktokConfig.enableComments}
+                  onChange={(e) => setTiktokConfig(prev => ({
                     ...prev,
                     enableComments: e.target.checked
                   }))}
@@ -226,15 +162,129 @@ export default function AnalysisForm({ onSubmit, isLoading }: AnalysisFormProps)
               <div className="flex justify-between items-center mb-2">
                 <label className="text-xs font-bold text-gray-600 uppercase">{t('douyinNewConfig.videoCount')}</label>
                 <span className="text-xs font-mono bg-white px-2 py-0.5 rounded shadow-sm">
-                  {douyinNewConfig.maxVideos} {t('units.videos')}
+                  {tiktokConfig.maxVideos} {t('units.videos')}
+                </span>
+              </div>
+              <input
+                type="range"
+                min="5"
+                max="30"
+                value={tiktokConfig.maxVideos}
+                onChange={(e) => setTiktokConfig(prev => ({
+                  ...prev,
+                  maxVideos: parseInt(e.target.value)
+                }))}
+                disabled={isLoading}
+                className="w-full"
+              />
+              <div className="flex justify-between text-[10px] text-gray-400 mt-1">
+                <span>5</span>
+                <span>30</span>
+              </div>
+            </div>
+
+            {/* 每视频评论数滑块 */}
+            {tiktokConfig.enableComments && (
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <label className="text-xs font-bold text-gray-600 uppercase">{t('douyinNewConfig.commentsPerVideo')}</label>
+                  <span className="text-xs font-mono bg-white px-2 py-0.5 rounded shadow-sm">
+                    {tiktokConfig.maxCommentsPerVideo} {t('units.comments')}
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min="10"
+                  max="50"
+                  value={tiktokConfig.maxCommentsPerVideo}
+                  onChange={(e) => setTiktokConfig(prev => ({
+                    ...prev,
+                    maxCommentsPerVideo: parseInt(e.target.value)
+                  }))}
+                  disabled={isLoading}
+                  className="w-full"
+                />
+                <div className="flex justify-between text-[10px] text-gray-400 mt-1">
+                  <span>10</span>
+                  <span>50</span>
+                </div>
+              </div>
+            )}
+
+            {/* 成本预估 */}
+            <div className="pt-2 border-t border-blue-200">
+              <div className="text-xs text-gray-600">
+                <span className="font-medium">{t('tikhubConfig.costEstimate')}:</span>
+                <span className="ml-2 font-mono text-blue-600">
+                  ~¥{((tiktokConfig.maxVideos / 20 * 0.01 + (tiktokConfig.enableComments ? tiktokConfig.maxVideos * (tiktokConfig.maxCommentsPerVideo / 20) * 0.01 : 0)).toFixed(2))}
+                </span>
+                <span className="text-gray-400 ml-1">{t('tikhubConfig.perAnalysis')}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TikTok 配置面板 */}
+      {dataSource === 'tiktok' && (
+        <div className="p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl space-y-4 border border-purple-100">
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0 w-8 h-8 bg-purple-500 rounded-lg flex items-center justify-center">
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <div className="text-sm font-bold text-[#18181B] mb-1">TikTok API 配置</div>
+              <div className="text-xs text-gray-600 mb-3">国际版 TikTok 数据源，基于 TikHub API</div>
+
+              {/* API 状态指示 */}
+              <div className="flex items-center gap-2 text-xs">
+                <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full">
+                  <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+                  API 服务可用
+                </span>
+                <span className="text-gray-500">按请求计费，约 ¥0.01/次</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="border-t border-purple-200 pt-4 space-y-4">
+            {/* 爬取评论开关 */}
+            <label className="flex items-center justify-between group cursor-pointer">
+              <div className="pointer-events-none">
+                <span className="block text-sm font-medium text-[#18181B]">{t('douyinNewConfig.enableComments')}</span>
+                <span className="text-xs text-gray-500">获取评论数据可提高分析准确性</span>
+              </div>
+              <div className="relative inline-flex items-center">
+                <input
+                  type="checkbox"
+                  checked={tiktokConfig.enableComments}
+                  onChange={(e) => setTiktokConfig(prev => ({
+                    ...prev,
+                    enableComments: e.target.checked
+                  }))}
+                  disabled={isLoading}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-500"></div>
+              </div>
+            </label>
+
+            {/* 视频数量滑块 */}
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <label className="text-xs font-bold text-gray-600 uppercase">{t('douyinNewConfig.videoCount')}</label>
+                <span className="text-xs font-mono bg-white px-2 py-0.5 rounded shadow-sm">
+                  {tiktokConfig.maxVideos} {t('units.videos')}
                 </span>
               </div>
               <input
                 type="range"
                 min="5"
                 max="50"
-                value={douyinNewConfig.maxVideos}
-                onChange={(e) => setDouyinNewConfig(prev => ({
+                value={tiktokConfig.maxVideos}
+                onChange={(e) => setTiktokConfig(prev => ({
                   ...prev,
                   maxVideos: parseInt(e.target.value)
                 }))}
@@ -248,20 +298,20 @@ export default function AnalysisForm({ onSubmit, isLoading }: AnalysisFormProps)
             </div>
 
             {/* 每视频评论数滑块 */}
-            {douyinNewConfig.enableComments && (
+            {tiktokConfig.enableComments && (
               <div>
                 <div className="flex justify-between items-center mb-2">
                   <label className="text-xs font-bold text-gray-600 uppercase">{t('douyinNewConfig.commentsPerVideo')}</label>
                   <span className="text-xs font-mono bg-white px-2 py-0.5 rounded shadow-sm">
-                    {douyinNewConfig.maxCommentsPerVideo} {t('units.comments')}
+                    {tiktokConfig.maxCommentsPerVideo} {t('units.comments')}
                   </span>
                 </div>
                 <input
                   type="range"
                   min="10"
                   max="100"
-                  value={douyinNewConfig.maxCommentsPerVideo}
-                  onChange={(e) => setDouyinNewConfig(prev => ({
+                  value={tiktokConfig.maxCommentsPerVideo}
+                  onChange={(e) => setTiktokConfig(prev => ({
                     ...prev,
                     maxCommentsPerVideo: parseInt(e.target.value)
                   }))}
@@ -276,122 +326,15 @@ export default function AnalysisForm({ onSubmit, isLoading }: AnalysisFormProps)
             )}
 
             {/* 成本预估 */}
-            <div className="pt-2 border-t border-blue-200">
+            <div className="pt-2 border-t border-purple-200">
               <div className="text-xs text-gray-600">
                 <span className="font-medium">{t('tikhubConfig.costEstimate')}:</span>
-                <span className="ml-2 font-mono text-blue-600">
-                  ~¥{((douyinNewConfig.maxVideos / 20 * 0.01 + (douyinNewConfig.enableComments ? douyinNewConfig.maxVideos * (douyinNewConfig.maxCommentsPerVideo / 20) * 0.01 : 0)).toFixed(2))}
+                <span className="ml-2 font-mono text-purple-600">
+                  ~¥{((tiktokConfig.maxVideos / 20 * 0.01 + (tiktokConfig.enableComments ? tiktokConfig.maxVideos * (tiktokConfig.maxCommentsPerVideo / 20) * 0.01 : 0)).toFixed(2))}
                 </span>
                 <span className="text-gray-400 ml-1">{t('tikhubConfig.perAnalysis')}</span>
               </div>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* 新版抖音配置面板 */}
-      {dataSource === 'douyin_new' && (
-        <div className="p-4 bg-[#FBFBF9] rounded-xl space-y-4">
-          <div className="text-sm font-bold text-[#18181B] mb-2">{t('douyinNewConfig.title')}</div>
-
-          {/* 爬取评论开关 */}
-          <label className="flex items-center justify-between group cursor-pointer">
-            <div className="pointer-events-none">
-              <span className="block text-sm font-medium text-[#18181B]">{t('douyinNewConfig.enableComments')}</span>
-              <span className="text-xs text-gray-400">{t('douyinNewConfig.enableCommentsDesc')}</span>
-            </div>
-            <div className="relative inline-flex items-center">
-              <input
-                type="checkbox"
-                checked={douyinNewConfig.enableComments}
-                onChange={(e) => setDouyinNewConfig(prev => ({
-                  ...prev,
-                  enableComments: e.target.checked
-                }))}
-                disabled={isLoading}
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#18181B]"></div>
-            </div>
-          </label>
-
-          <div className="border-t border-[#E5E4DE] pt-4 space-y-4">
-            {/* 视频数量滑块 */}
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <label className="text-xs font-bold text-gray-500 uppercase">{t('douyinNewConfig.videoCount')}</label>
-                <span className="text-xs font-mono bg-white px-2 py-0.5 rounded shadow-sm">
-                  {douyinNewConfig.maxVideos} {t('units.videos')}
-                </span>
-              </div>
-              <input
-                type="range"
-                min="5"
-                max="30"
-                value={douyinNewConfig.maxVideos}
-                onChange={(e) => setDouyinNewConfig(prev => ({
-                  ...prev,
-                  maxVideos: parseInt(e.target.value)
-                }))}
-                disabled={isLoading}
-                className="w-full"
-              />
-              <div className="flex justify-between text-[10px] text-gray-400 mt-1">
-                <span>5</span>
-                <span>30</span>
-              </div>
-            </div>
-
-            {/* 每视频评论数滑块 */}
-            {douyinNewConfig.enableComments && (
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <label className="text-xs font-bold text-gray-500 uppercase">{t('douyinNewConfig.commentsPerVideo')}</label>
-                  <span className="text-xs font-mono bg-white px-2 py-0.5 rounded shadow-sm">
-                    {douyinNewConfig.maxCommentsPerVideo} {t('units.comments')}
-                  </span>
-                </div>
-                <input
-                  type="range"
-                  min="10"
-                  max="50"
-                  value={douyinNewConfig.maxCommentsPerVideo}
-                  onChange={(e) => setDouyinNewConfig(prev => ({
-                    ...prev,
-                    maxCommentsPerVideo: parseInt(e.target.value)
-                  }))}
-                  disabled={isLoading}
-                  className="w-full"
-                />
-                <div className="flex justify-between text-[10px] text-gray-400 mt-1">
-                  <span>10</span>
-                  <span>50</span>
-                </div>
-              </div>
-            )}
-
-            {/* 二级评论开关 */}
-            {douyinNewConfig.enableComments && (
-              <label className="flex items-center justify-between group cursor-pointer pt-2 border-t border-[#E5E4DE]">
-                <div className="pointer-events-none">
-                  <span className="block text-sm font-medium text-[#18181B]">{t('douyinNewConfig.subComments')}</span>
-                  <span className="text-xs text-gray-400">{t('douyinNewConfig.subCommentsDesc')}</span>
-                </div>
-                <div className="relative inline-flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={douyinNewConfig.enableSubComments}
-                    onChange={(e) => setDouyinNewConfig(prev => ({
-                      ...prev,
-                      enableSubComments: e.target.checked
-                    }))}
-                    disabled={isLoading}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#18181B]"></div>
-                </div>
-              </label>
-            )}
           </div>
         </div>
       )}
@@ -421,15 +364,10 @@ export default function AnalysisForm({ onSubmit, isLoading }: AnalysisFormProps)
       {keywords.trim() && (
         <div className="text-xs text-gray-500 text-center">
           {t('hint.from')} <strong className="text-[#18181B]">{getSourceDisplayName()}</strong>
-          {dataSource === 'douyin' && deepCrawl && (
-            <span className="text-amber-600"> {t('hint.deepCrawl', { count: maxVideos })}</span>
-          )}
-          {(dataSource === 'douyin_new' || dataSource === 'tikhub') && (
-            <span className={dataSource === 'tikhub' ? "text-blue-600" : "text-amber-600"}>
-              {' '}{t('hint.videos', { count: douyinNewConfig.maxVideos })}
-              {douyinNewConfig.enableComments && t('hint.comments', { count: douyinNewConfig.maxCommentsPerVideo })}
-            </span>
-          )}
+          <span className={dataSource === 'tiktok' ? "text-purple-600" : "text-blue-600"}>
+            {' '}{t('hint.videos', { count: tiktokConfig.maxVideos })}
+            {tiktokConfig.enableComments && t('hint.comments', { count: tiktokConfig.maxCommentsPerVideo })}
+          </span>
           {' '}{t('hint.analyze')}
         </div>
       )}

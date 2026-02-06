@@ -23,10 +23,7 @@
     "dataSource": {
       "label": "Data Source",
       "tiktok": "TikTok API",
-      "tikhub": "TikHub API (Recommended)",
-      "xiaohongshu": "Xiaohongshu - Coming Soon",
-      "douyinOld": "Douyin - Legacy",
-      "douyinNew": "Douyin - New"
+      "tikhub": "TikHub API (Recommended)"
     },
     "keywords": {
       "label": "Keywords",
@@ -40,7 +37,7 @@
     "speedFast": "Speed (Fast)",
     "accuracySlow": "Accuracy (Slow)",
     "douyinNewConfig": {
-      "title": "Douyin New Config",
+      "title": "Douyin Config",
       "enableComments": "Crawl Comments",
       "enableCommentsDesc": "Include user comment data",
       "videoCount": "Video Count",

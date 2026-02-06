@@ -256,6 +256,34 @@ export class TikHubAPIClient {
 
       const data = response.data;
 
+      // 添加详细的 API 响应日志
+      console.log('[TikHub API] 搜索响应详情:', {
+        code: data.code,
+        message: data.message,
+        hasData: !!data.data,
+        hasDataData: !!data.data?.data,
+        hasDataDataData: !!data.data?.data?.data,
+        dataDataType: typeof data.data?.data,
+        dataDataIsArray: Array.isArray(data.data?.data),
+        dataDataDataType: typeof data.data?.data?.data,
+        dataDataDataIsArray: Array.isArray(data.data?.data?.data),
+        hasMore: data.data?.has_more,
+        cursor: data.data?.cursor,
+        searchId: data.data?.search_id,
+        cacheUrl: data.cache_url,
+        dataKeys: data.data ? Object.keys(data.data) : []
+      });
+
+      // 如果数据量较少，输出完整数据结构以便调试
+      if (data.data?.data) {
+        const dataStr = JSON.stringify(data.data.data);
+        if (dataStr.length < 500) {
+          console.log('[TikHub API] data.data 内容:', dataStr);
+        } else {
+          console.log('[TikHub API] data.data 类型:', Array.isArray(data.data.data) ? `数组(长度:${data.data.data.length})` : typeof data.data.data);
+        }
+      }
+
       // 存储缓存
       if (data.cache_url) {
         this.setCache(cacheKey, data, data.cache_url);
@@ -267,9 +295,15 @@ export class TikHubAPIClient {
       return data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        throw new Error(
-          `TikHub API 搜索失败: ${error.response?.status} ${error.response?.data?.message || error.message}`
-        );
+        if (error.response) {
+          throw new Error(
+            `TikHub API 搜索失败: ${error.response.status} ${error.response.data?.message || error.message}`
+          );
+        } else {
+          throw new Error(
+            `TikHub API 搜索失败: ${error.message}`
+          );
+        }
       }
       throw error;
     }
@@ -321,9 +355,29 @@ export class TikHubAPIClient {
       return data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        throw new Error(
-          `TikHub API 评论获取失败: ${error.response?.status} ${error.response?.data?.message || error.message}`
-        );
+        // 对于 400 错误，返回空评论列表而不是抛出错误
+        if (error.response?.status === 400) {
+          console.warn(`[TikHub API] 视频 ${awemeId} 评论获取失败 (400)，返回空列表`);
+          return {
+            code: 200,
+            message: '评论获取失败，返回空列表',
+            data: {
+              comments: [],
+              cursor: 0,
+              has_more: false,
+              total: 0
+            }
+          };
+        }
+        if (error.response) {
+          throw new Error(
+            `TikHub API 评论获取失败: ${error.response.status} ${error.response.data?.message || error.message}`
+          );
+        } else {
+          throw new Error(
+            `TikHub API 评论获取失败: ${error.message}`
+          );
+        }
       }
       throw error;
     }
@@ -358,12 +412,12 @@ export class TikHubAPIClient {
             commentCount: response.data?.comments?.length || 0
           });
 
-          if (response.code !== 200 || !response.data?.comments) {
+          if (response.code !== 200 || !response.data) {
             console.warn('[TikHub API] 评论响应格式不符合预期，停止获取评论');
             break;
           }
 
-          const commentList = response.data.comments;
+          const commentList = response.data.comments || [];
           comments.push(...commentList);
 
           // 检查是否还有更多评论
@@ -521,16 +575,46 @@ export class TikHubAPIClient {
         { params: queryParams }
       );
 
+      const data = response.data;
+
+      // 添加详细的 API 响应日志
+      console.log('[TikTok API] 搜索响应详情:', {
+        code: data.code,
+        message: data.message,
+        hasData: !!data.data,
+        hasDataData: !!data.data?.data,
+        hasDataDataData: !!data.data?.data?.data,
+        dataDataType: typeof data.data?.data,
+        dataDataIsArray: Array.isArray(data.data?.data),
+        dataDataDataType: typeof data.data?.data?.data,
+        dataDataDataIsArray: Array.isArray(data.data?.data?.data),
+        hasMore: data.data?.has_more,
+        cursor: data.data?.cursor,
+        searchId: data.data?.search_id,
+        cacheUrl: data.cache_url,
+        dataKeys: data.data ? Object.keys(data.data) : []
+      });
+
+      // 如果数据量较少，输出完整数据结构以便调试
+      if (data.data?.data) {
+        const dataStr = JSON.stringify(data.data.data);
+        if (dataStr.length < 500) {
+          console.log('[TikTok API] data.data 内容:', dataStr);
+        } else {
+          console.log('[TikTok API] data.data 类型:', Array.isArray(data.data.data) ? `数组(长度:${data.data.data.length})` : typeof data.data.data);
+        }
+      }
+
       // 存储缓存
-      if (response.data?.cache_url) {
+      if (data.cache_url) {
         const cacheKey = `tiktok_search_${JSON.stringify(params)}`;
-        this.setCache(cacheKey, response.data, response.data.cache_url);
+        this.setCache(cacheKey, data, data.cache_url);
       }
 
       // 更新成本预估
       this.costEstimate += this.COST_PER_REQUEST;
 
-      return response.data;
+      return data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
         throw new Error(

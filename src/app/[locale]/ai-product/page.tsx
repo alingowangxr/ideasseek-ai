@@ -3,7 +3,7 @@
 import { useState } from "react";
 import useSWR from "swr";
 import { useLocale } from 'next-intl';
-import AnalysisForm, { DataSourceType, DouyinNewConfig } from "@/components/AnalysisForm";
+import AnalysisForm, { TikTokConfig } from "@/components/AnalysisForm";
 import JobStatus from "@/components/JobStatus";
 import AIProductCard from "@/components/AIProductCard";
 import AIProductDetailModal from "@/components/AIProductDetailModal";
@@ -76,10 +76,10 @@ export default function AIProductPage() {
 
   const handleAnalysisSubmit = async (
     keywords: string[],
-    dataSource: DataSourceType,
+    dataSource: 'tiktok' | 'tikhub',
     deepCrawl: boolean,
     maxVideos: number,
-    douyinNewConfig?: DouyinNewConfig
+    tiktokConfig?: TikTokConfig
   ) => {
     try {
       setIsLoading(true);
@@ -97,7 +97,7 @@ export default function AIProductPage() {
           dataSource,
           deepCrawl,
           maxVideos,
-          douyinNewConfig,
+          tiktokConfig,
           locale  // 输出语言
         }),
       });

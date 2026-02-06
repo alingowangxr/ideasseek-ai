@@ -1,7 +1,7 @@
 // 任务管理服务
 import { v4 as uuidv4 } from 'uuid';
 import { DataSourceFactory } from './data-source-factory';
-import { DataSourceType, DouyinNewCrawlOptions } from './data-source-interface';
+import { DataSourceType, TikTokCrawlOptions } from './data-source-interface';
 import { ClusteringService, ClusterResult } from './clustering-service';
 import { GLMService } from './glm-service';
 import { PriorityScorer, PriorityScore } from './priority-scoring';
@@ -48,7 +48,7 @@ export interface Job {
   dataSource: DataSourceType;
   deepCrawl: boolean;  // 是否深度抓取（含评论）
   maxVideos?: number;  // 深度抓取时的最大视频数
-  douyinNewOptions?: DouyinNewCrawlOptions;  // 新版抖音完整配置
+  tikTokOptions?: TikTokCrawlOptions;  // 新版抖音完整配置
   locale: string;  // 输出语言
   startTime: number;
   results?: ClusterResult[];
@@ -109,11 +109,11 @@ class JobManagerImpl {
     dataSource: DataSourceType = 'tiktok',
     deepCrawl: boolean = false,
     maxVideos: number = 10,
-    douyinNewOptions?: DouyinNewCrawlOptions,
+    tikTokOptions?: TikTokCrawlOptions,
     locale: string = 'zh'
   ): string {
     const jobId = uuidv4();
-    console.log('[JobManager] 创建任务:', { jobId, keywords, dataSource, douyinNewOptions });
+    console.log('[JobManager] 创建任务:', { jobId, keywords, dataSource, tikTokOptions });
 
     const job: Job = {
       jobId,
@@ -124,7 +124,7 @@ class JobManagerImpl {
       dataSource,
       deepCrawl,
       maxVideos,
-      douyinNewOptions,
+      tikTokOptions,
       locale,
       startTime: Date.now()
     };
@@ -221,11 +221,11 @@ class JobManagerImpl {
           // 深度抓取模式（含评论）
           this.updateJobStatus(jobId, 'processing', `正在深度抓取 "${keyword}" 相关数据（含评论）...`);
 
-          // 为新版抖音使用完整配置
-          const crawlOptions = job.dataSource === 'douyin_new' && job.douyinNewOptions
+          // 为 TikTok 和 TikHub 使用完整配置
+          const crawlOptions = (job.dataSource === 'tiktok' || job.dataSource === 'tikhub') && job.tikTokOptions
             ? {
-                maxVideos: job.douyinNewOptions.maxVideos,
-                maxCommentsPerVideo: job.douyinNewOptions.maxCommentsPerVideo
+                maxVideos: job.tikTokOptions.maxVideos,
+                maxCommentsPerVideo: job.tikTokOptions.maxCommentsPerVideo
               }
             : {
                 maxVideos: job.maxVideos || 10,
@@ -356,13 +356,22 @@ class JobManagerImpl {
       // 合并聚类结果（视频聚类在前，评论聚类在后）
       const clusters = [...videoClusters, ...commentClusters];
 
+      // 如果没有聚类结果，将所有文本作为单个未分类组
       if (clusters.length === 0) {
         const totalTexts = videoTexts.length + commentTexts.length;
-        throw new Error(
-          `无法从数据中识别出有意义的聚类（需要至少3条相似数据才能形成聚类）。\n` +
+        console.warn(
+          `数据量较少(${totalTexts}条)，无法形成有意义的聚类。\n` +
           `当前数据：${videoTexts.length}条视频，${commentTexts.length}条评论。\n` +
-          `建议：增加数据量或使用更相关的搜索关键词。`
+          `将所有数据作为单个未分类组返回。`
         );
+        
+        // 将所有文本合并为一个聚类
+        const allTexts = [...videoTexts, ...commentTexts];
+        if (allTexts.length > 0) {
+          clusters.push(allTexts);
+        } else {
+          throw new Error('未能获取到任何相关数据');
+        }
       }
 
       console.log(`总聚类数: ${clusters.length} (视频: ${videoClusters.length}, 评论: ${commentClusters.length})`);
@@ -559,11 +568,11 @@ function getGlobalJobManager() {
         dataSource: DataSourceType = 'tiktok',
         deepCrawl: boolean = false,
         maxVideos: number = 10,
-        douyinNewOptions?: DouyinNewCrawlOptions,
+        tikTokOptions?: TikTokCrawlOptions,
         locale: string = 'zh'
       ): string {
         const jobId = uuidv4();
-        console.log('[JobManager] 创建任务:', { jobId, keywords, dataSource, douyinNewOptions });
+        console.log('[JobManager] 创建任务:', { jobId, keywords, dataSource, tikTokOptions });
 
         const job: Job = {
           jobId,
@@ -574,7 +583,7 @@ function getGlobalJobManager() {
           dataSource,
           deepCrawl,
           maxVideos,
-          douyinNewOptions,
+          tikTokOptions,
           locale,
           startTime: Date.now()
         };
@@ -671,11 +680,11 @@ function getGlobalJobManager() {
               // 深度抓取模式（含评论）
               this.updateJobStatus(jobId, 'processing', `正在深度抓取 "${keyword}" 相关数据（含评论）...`);
 
-              // 为 TikTok、TikHub 和新版抖音使用完整配置
-              const crawlOptions = (job.dataSource === 'tiktok' || job.dataSource === 'tikhub' || job.dataSource === 'douyin_new') && job.douyinNewOptions
+              // 为 TikTok 和 TikHub 使用完整配置
+              const crawlOptions = (job.dataSource === 'tiktok' || job.dataSource === 'tikhub') && job.tikTokOptions
                 ? {
-                    maxVideos: job.douyinNewOptions.maxVideos,
-                    maxCommentsPerVideo: job.douyinNewOptions.maxCommentsPerVideo
+                    maxVideos: job.tikTokOptions.maxVideos,
+                    maxCommentsPerVideo: job.tikTokOptions.maxCommentsPerVideo
                   }
                 : {
                     maxVideos: job.maxVideos || 10,
@@ -806,13 +815,22 @@ function getGlobalJobManager() {
           // 合并聚类结果（视频聚类在前，评论聚类在后）
           const clusters = [...videoClusters, ...commentClusters];
 
+          // 如果没有聚类结果，将所有文本作为单个未分类组
           if (clusters.length === 0) {
             const totalTexts = videoTexts.length + commentTexts.length;
-            throw new Error(
-              `无法从数据中识别出有意义的聚类（需要至少3条相似数据才能形成聚类）。\n` +
+            console.warn(
+              `数据量较少(${totalTexts}条)，无法形成有意义的聚类。\n` +
               `当前数据：${videoTexts.length}条视频，${commentTexts.length}条评论。\n` +
-              `建议：增加数据量或使用更相关的搜索关键词。`
+              `将所有数据作为单个未分类组返回。`
             );
+            
+            // 将所有文本合并为一个聚类
+            const allTexts = [...videoTexts, ...commentTexts];
+            if (allTexts.length > 0) {
+              clusters.push(allTexts);
+            } else {
+              throw new Error('未能获取到任何相关数据');
+            }
           }
 
           console.log(`总聚类数: ${clusters.length} (视频: ${videoClusters.length}, 评论: ${commentClusters.length})`);

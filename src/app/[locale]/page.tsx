@@ -4,7 +4,7 @@ import { useState } from "react";
 import useSWR from "swr";
 import Link from "next/link";
 import { useTranslations, useLocale } from 'next-intl';
-import AnalysisForm, { DouyinNewConfig } from "@/components/AnalysisForm";
+import AnalysisForm, { TikTokConfig } from "@/components/AnalysisForm";
 import LoadingAnimation from "@/components/LoadingAnimation";
 import ResultsTable from "@/components/ResultsTable";
 import DetailModal from "@/components/DetailModal";
@@ -162,10 +162,10 @@ export default function Home() {
 
   const handleAnalysisSubmit = async (
     submittedKeywords: string[],
-    dataSource: 'xiaohongshu' | 'douyin' | 'douyin_new',
+    dataSource: 'tiktok' | 'tikhub',
     deepCrawl: boolean,
     maxVideos: number,
-    douyinNewConfig?: DouyinNewConfig
+    tiktokConfig?: TikTokConfig
   ) => {
     try {
       setIsLoading(true);
@@ -186,7 +186,7 @@ export default function Home() {
           dataSource,
           deepCrawl,
           maxVideos,
-          douyinNewConfig,  // 新版抖音配置
+          tiktokConfig,  // TikTok/TikHub 配置
           locale  // 输出语言
         }),
       });

@@ -5,7 +5,7 @@ import { DataSourceType } from '../../../../lib/services/data-source-interface';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { keywords, limit = 50, dataSource = 'xiaohongshu', locale = 'zh' } = body;
+    const { keywords, limit = 50, dataSource = 'tiktok', locale = 'zh' } = body;
 
     // 验证输入
     if (!keywords || !Array.isArray(keywords) || keywords.length === 0) {
@@ -24,8 +24,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 验证数据源
-    const validDataSource: DataSourceType = dataSource === 'douyin' ? 'douyin' : 'xiaohongshu';
+    // 验证数据源 - 仅支持 TikTok 和 TikHub
+    let validDataSource: DataSourceType;
+    if (dataSource === 'tiktok' || dataSource === 'tikhub') {
+      validDataSource = dataSource;
+    } else {
+      validDataSource = 'tiktok';  // 默认使用 TikTok
+    }
 
     // 创建AI产品分析任务
     const jobId = aiProductJobManager.createJob(validKeywords, limit, validDataSource, locale);
@@ -43,5 +48,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
-

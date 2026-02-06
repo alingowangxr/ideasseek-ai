@@ -13,7 +13,7 @@ import {
   DataSourceResult,
   DeepCrawlResult,
   DeepCrawlOptions,
-  DouyinNewCrawlOptions
+  TikTokCrawlOptions
 } from './data-source-interface';
 
 /**
@@ -40,8 +40,8 @@ export class TikHubService implements IDataSourceService {
     this.defaultOptions = {
       maxVideos: 20,
       maxCommentsPerVideo: 20,
-      sortType: '1', // 默认按最多点赞排序
-      publishTime: '7', // 默认最近一周
+      sortType: '0', // 综合排序（与 request.log 一致）
+      publishTime: '0', // 不限时间（与 request.log 一致）
       enableCache: true,
       requestDelay: 500
     };
@@ -78,28 +78,68 @@ export class TikHubService implements IDataSourceService {
         });
 
         console.log('[TikHub Service] API 响应 code:', searchResult.code);
+        console.log('[TikHub Service] API 完整响应结构:', JSON.stringify({
+          hasData: !!searchResult.data,
+          hasDataData: !!searchResult.data?.data,
+          dataDataType: typeof searchResult.data?.data,
+          dataDataIsArray: Array.isArray(searchResult.data?.data),
+          hasDataDataData: !!searchResult.data?.data?.data,
+          dataDataDataType: typeof searchResult.data?.data?.data,
+          dataDataDataIsArray: Array.isArray(searchResult.data?.data?.data),
+          hasMore: searchResult.data?.has_more,
+          cursor: searchResult.data?.cursor,
+          searchId: searchResult.data?.search_id
+        }, null, 2));
 
         if (searchResult.code !== 200) {
           throw new Error(`TikHub API 搜索失败: ${searchResult.message}`);
         }
 
         // TikHub API 响应格式: { code, data: { status_code, data: [items], cursor, has_more, search_id } }
+        // 支持多种可能的数据结构
         let items: any[] = [];
 
-        if (searchResult.data && searchResult.data.data && Array.isArray(searchResult.data.data)) {
+        // 尝试多种可能的数据结构
+        if (searchResult.data?.data?.data && Array.isArray(searchResult.data.data.data)) {
+          console.log('[TikHub Service] 使用三层嵌套数据结构: data.data.data');
+          items = searchResult.data.data.data;
+        } else if (searchResult.data?.data && Array.isArray(searchResult.data.data)) {
+          console.log('[TikHub Service] 使用两层嵌套数据结构: data.data');
           items = searchResult.data.data;
-          // 更新分页信息
-          if (searchResult.data.has_more !== undefined) {
+        } else if (Array.isArray(searchResult.data?.data)) {
+          console.log('[TikHub Service] 使用备用数据结构: data (as array)');
+          items = searchResult.data.data;
+        } else {
+          console.warn('[TikHub Service] 未找到有效的数据数组');
+          console.warn('[TikHub Service] searchResult.data:', JSON.stringify(searchResult.data, null, 2));
+          hasMore = false;
+        }
+
+        if (items.length > 0) {
+          // 更新分页信息 - has_more 和 cursor 在 data 的根级别
+          if (searchResult.data.data?.has_more !== undefined) {
+            hasMore = searchResult.data.data.has_more === 1 || searchResult.data.data.has_more === true;
+            console.log('[TikHub Service] 更新 has_more:', hasMore, '(原始值:', searchResult.data.data.has_more, ')');
+          } else if (searchResult.data?.has_more !== undefined) {
             hasMore = searchResult.data.has_more === 1 || searchResult.data.has_more === true;
+            console.log('[TikHub Service] 更新 has_more:', hasMore, '(从 data 层读取，原始值:', searchResult.data.has_more, ')');
           }
-          if (searchResult.data.cursor !== undefined) {
+          if (searchResult.data.data?.cursor !== undefined) {
+            cursor = searchResult.data.data.cursor;
+            console.log('[TikHub Service] 更新 cursor:', cursor);
+          } else if (searchResult.data?.cursor !== undefined) {
             cursor = searchResult.data.cursor;
+            console.log('[TikHub Service] 更新 cursor:', cursor, '(从 data 层读取)');
           }
-          if (searchResult.data.search_id) {
+          if (searchResult.data.data?.search_id) {
+            searchId = searchResult.data.data.search_id;
+            console.log('[TikHub Service] 更新 search_id:', searchId);
+          } else if (searchResult.data?.search_id) {
             searchId = searchResult.data.search_id;
+            console.log('[TikHub Service] 更新 search_id:', searchId, '(从 data 层读取)');
           }
         } else {
-          console.warn('[TikHub Service] 未找到数据数组，停止分页');
+          console.warn('[TikHub Service] 数据数组为空，停止分页');
           hasMore = false;
         }
 
@@ -123,6 +163,8 @@ export class TikHubService implements IDataSourceService {
             }
           }
         }
+
+        console.log(`[TikHub Service] 当前页处理结果: 总数 ${pageItems.length}, 有效视频 ${videos.length - (totalFetched - pageItems.length)}, 累计视频 ${videos.length}`);
 
         totalFetched += pageItems.length;
 
@@ -276,7 +318,16 @@ export class TikHubService implements IDataSourceService {
    */
   private convertSearchResultToVideo(item: SearchResultItem, sourceKeyword: string): any {
     const aweme = item.aweme_info;
-    if (!aweme) return null;
+    
+    // 添加调试日志
+    if (!aweme) {
+      console.warn('[TikHub Service] convertSearchResultToVideo: item 缺少 aweme_info', {
+        itemType: item.type,
+        hasAwemeInfo: !!item.aweme_info,
+        itemKeys: Object.keys(item)
+      });
+      return null;
+    }
 
     // 转换时间戳
     const createTime = aweme.create_time

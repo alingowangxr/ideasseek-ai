@@ -1,6 +1,8 @@
-// 聚类分析服务 - 基于语义向量化 + DBSCAN
-import { spawn } from 'child_process';
-import * as path from 'path';
+// ==================== 聚类分析服务 - TypeScript 版本 ====================
+// 使用新的 TypeScript 语义聚类，替代 Python 版本
+// 基于: density-clustering + ml-distance + OpenAI/智谱AI Embedding
+
+import { ClusteringService as TSClusteringService, createClusteringService } from './clustering/ClusteringService';
 
 export interface SemanticCluster {
   representative_text: string;
@@ -65,19 +67,27 @@ export interface ClusterResult {
   };
 }
 
+/**
+ * 聚类服务 - TypeScript 版本
+ */
 export class ClusteringService {
-  private pythonPath: string;
-  private scriptPath: string;
+  private tsService: TSClusteringService;
 
   constructor() {
-    // 使用系统 Python 或虚拟环境
-    this.pythonPath = process.env.PYTHON_PATH || 'python';
-    this.scriptPath = path.join(process.cwd(), 'lib', 'semantic_clustering.py');
+    // 使用新的 TypeScript 聚类服务
+    this.tsService = createClusteringService({
+      providerType: 'auto', // 自动选择提供商 (OpenAI 优先)
+      embeddingOptions: {
+        eps: 0.3,        // 余弦距离阈值
+        minSamples: 3,   // 最小簇大小
+        enableCleaning: true // 启用数据清洗
+      }
+    });
   }
 
   /**
-   * 调用 Python 语义聚类服务
-   * 使用智谱 Embedding + DBSCAN 算法
+   * 调用 TypeScript 语义聚类服务
+   * 使用 OpenAI/智谱AI Embedding + DBSCAN 算法
    */
   public async clusterTextsWithEmbeddings(
     texts: string[],
@@ -87,86 +97,41 @@ export class ClusteringService {
       minLength?: number;
     } = {}
   ): Promise<ClusteringResult> {
-    // eps 和 minSamples 都不设置默认值，让 Python 根据数据量自动计算
-    const { eps, minSamples, minLength = 4 } = options;
+    try {
+      console.log(`[TS Clustering] 开始聚类 ${texts.length} 条文本`);
 
-    return new Promise((resolve, reject) => {
-      const args = [
-        this.scriptPath,
-        '--stdin',
-        '--min-length', minLength.toString()
-      ];
-
-      // 只有明确指定了参数才传递，否则让Python自动计算
-      if (eps !== undefined) {
-        args.push('--eps', eps.toString());
-      }
-      if (minSamples !== undefined) {
-        args.push('--min-samples', minSamples.toString());
-      }
-
-      const pythonProcess = spawn(this.pythonPath, args, {
-        cwd: process.cwd(),
-        env: { ...process.env, PYTHONIOENCODING: 'utf-8' }
+      const result = await this.tsService.cluster(texts, {
+        eps: options.eps,
+        minSamples: options.minSamples,
+        enableCleaning: true
       });
 
-      let stdout = '';
-      let stderr = '';
+      // 转换为旧格式
+      const clusters: SemanticCluster[] = result.clusters.map(c => ({
+        representative_text: c.representative,
+        size: c.size,
+        texts: c.texts
+      }));
 
-      pythonProcess.stdout.on('data', (data) => {
-        stdout += data.toString();
-      });
+      console.log(`[TS Clustering] 聚类完成: ${clusters.length} 个簇, ${result.noiseCount} 个噪声点`);
 
-      pythonProcess.stderr.on('data', (data) => {
-        stderr += data.toString();
-        // 将 Python 日志输出到控制台
-        console.log('[Python]', data.toString().trim());
-      });
+      return {
+        success: true,
+        clusters,
+        total_clusters: clusters.length,
+        total_texts: result.cleanedTexts
+      };
 
-      pythonProcess.on('close', (code) => {
-        if (code !== 0) {
-          console.error('Python 聚类脚本执行失败:', stderr);
-          resolve({
-            success: false,
-            clusters: [],
-            total_clusters: 0,
-            total_texts: 0,
-            error: stderr || `进程退出码: ${code}`
-          });
-          return;
-        }
-
-        try {
-          const result = JSON.parse(stdout);
-          resolve(result);
-        } catch (e) {
-          console.error('解析 Python 输出失败:', stdout);
-          resolve({
-            success: false,
-            clusters: [],
-            total_clusters: 0,
-            total_texts: 0,
-            error: '解析聚类结果失败'
-          });
-        }
-      });
-
-      pythonProcess.on('error', (err) => {
-        console.error('启动 Python 进程失败:', err);
-        resolve({
-          success: false,
-          clusters: [],
-          total_clusters: 0,
-          total_texts: 0,
-          error: `启动 Python 失败: ${err.message}`
-        });
-      });
-
-      // 发送输入数据
-      const inputJson = JSON.stringify({ texts });
-      pythonProcess.stdin.write(inputJson);
-      pythonProcess.stdin.end();
-    });
+    } catch (error: any) {
+      console.error('[TS Clustering] 聚类失败:', error.message);
+      return {
+        success: false,
+        clusters: [],
+        total_clusters: 0,
+        total_texts: texts.length,
+        error: error.message
+      };
+    }
   }
 
   /**
@@ -175,7 +140,6 @@ export class ClusteringService {
    */
   public async clusterTexts(texts: string[], minClusterSize?: number): Promise<string[][]> {
     const result = await this.clusterTextsWithEmbeddings(texts, {
-      // 只有明确传递了 minClusterSize 才使用，否则让 Python 自动计算
       minSamples: minClusterSize
     });
 
@@ -204,7 +168,7 @@ export class ClusteringService {
   }
 
   /**
-   * 降级聚类算法（当 Python 服务不可用时）
+   * 降级聚类算法（当 TypeScript 服务不可用时）
    * 使用简单的关键词匹配
    */
   private fallbackCluster(texts: string[], minClusterSize?: number): string[][] {
@@ -253,7 +217,9 @@ export class ClusteringService {
     return result;
   }
 
-  // 为每个聚类选择代表性文本
+  /**
+   * 为每个聚类选择代表性文本
+   */
   public getRepresentativeTexts(cluster: string[], maxCount: number = 5): string[] {
     if (cluster.length <= maxCount) {
       return cluster;
@@ -269,6 +235,9 @@ export class ClusteringService {
     return scored.slice(0, maxCount).map(item => item.text);
   }
 
+  /**
+   * 计算文本代表性分数
+   */
   private calculateRepresentativeness(text: string, cluster: string[]): number {
     const textLength = text.length;
 
@@ -290,8 +259,27 @@ export class ClusteringService {
     return lengthScore + keywordScore;
   }
 
-  // 生成聚类ID
+  /**
+   * 生成聚类ID
+   */
   public generateClusterId(index: number): string {
     return `cluster-${index + 1}`;
   }
+
+  /**
+   * 获取服务统计信息
+   */
+  public getStats() {
+    return this.tsService.getStats();
+  }
+
+  /**
+   * 获取提供商信息
+   */
+  public getProviderInfo() {
+    return this.tsService.getProviderInfo();
+  }
 }
+
+// 导出单例
+export const clusteringService = new ClusteringService();

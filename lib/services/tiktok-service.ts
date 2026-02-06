@@ -68,21 +68,50 @@ export class TikTokService implements IDataSourceService {
         });
 
         console.log('[TikTok Service] API 响应 code:', searchResult.code);
+        console.log('[TikTok Service] API 完整响应结构:', JSON.stringify({
+          hasData: !!searchResult.data,
+          hasDataData: !!searchResult.data?.data,
+          dataDataType: typeof searchResult.data?.data,
+          dataDataIsArray: Array.isArray(searchResult.data?.data),
+          hasDataDataData: !!searchResult.data?.data?.data,
+          dataDataDataType: typeof searchResult.data?.data?.data,
+          dataDataDataIsArray: Array.isArray(searchResult.data?.data?.data),
+          hasMore: searchResult.data?.has_more,
+          cursor: searchResult.data?.cursor,
+          searchId: searchResult.data?.search_id
+        }, null, 2));
 
         if (searchResult.code !== 200) {
           throw new Error(`TikTok API 搜索失败: ${searchResult.message}`);
         }
 
         // TikTok API 响应格式: { code, data: { status_code, data: [ { type: 1, item: {...} } ] } }
+        // 支持多种可能的数据结构
         let items: any[] = [];
 
-        if (searchResult.data && searchResult.data.data && Array.isArray(searchResult.data.data)) {
+        // 尝试多种可能的数据结构
+        if (searchResult.data?.data?.data && Array.isArray(searchResult.data.data.data)) {
+          console.log('[TikTok Service] 使用三层嵌套数据结构: data.data.data');
+          items = searchResult.data.data.data;
+        } else if (searchResult.data?.data && Array.isArray(searchResult.data.data)) {
+          console.log('[TikTok Service] 使用两层嵌套数据结构: data.data');
           items = searchResult.data.data;
+        } else if (Array.isArray(searchResult.data?.data)) {
+          console.log('[TikTok Service] 使用备用数据结构: data (as array)');
+          items = searchResult.data.data;
+        } else {
+          console.warn('[TikTok Service] 未找到有效的数据数组');
+          console.warn('[TikTok Service] searchResult.data:', JSON.stringify(searchResult.data, null, 2));
+          hasMore = false;
+        }
+
+        if (items.length > 0) {
           // 更新分页信息
           // TikTok API 通常不直接返回 has_more，需要通过数据量判断
           hasMore = items.length >= 20; // 如果返回20条，可能还有更多
+          console.log('[TikTok Service] 更新 has_more:', hasMore, '(基于数据量判断)');
         } else {
-          console.warn('[TikTok Service] 未找到数据数组，停止分页');
+          console.warn('[TikTok Service] 数据数组为空，停止分页');
           hasMore = false;
         }
 
@@ -106,6 +135,8 @@ export class TikTokService implements IDataSourceService {
             }
           }
         }
+
+        console.log(`[TikTok Service] 当前页处理结果: 总数 ${pageItems.length}, 有效视频 ${videos.length - (totalFetched - pageItems.length)}, 累计视频 ${videos.length}`);
 
         totalFetched += pageItems.length;
 
@@ -258,7 +289,16 @@ export class TikTokService implements IDataSourceService {
   private convertSearchResultToVideo(item: any, sourceKeyword: string): any {
     // TikTok 数据结构: { type: 1, item: { id, desc, createTime, author, video, ... } }
     const tiktokItem = item.item;
-    if (!tiktokItem) return null;
+    
+    // 添加调试日志
+    if (!tiktokItem) {
+      console.warn('[TikTok Service] convertSearchResultToVideo: item 缺少 item 字段', {
+        itemType: item.type,
+        hasItem: !!item.item,
+        itemKeys: Object.keys(item)
+      });
+      return null;
+    }
 
     // 转换时间戳
     const createTime = tiktokItem.createTime

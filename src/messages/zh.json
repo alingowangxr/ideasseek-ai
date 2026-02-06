@@ -23,10 +23,7 @@
     "dataSource": {
       "label": "数据源 / Source",
       "tiktok": "TikTok API",
-      "tikhub": "TikHub API (推荐)",
-      "xiaohongshu": "小红书 - 开发中",
-      "douyinOld": "抖音 - 旧版",
-      "douyinNew": "抖音 - 新版"
+      "tikhub": "TikHub API (推荐)"
     },
     "keywords": {
       "label": "关键词 / Keyword",
@@ -40,7 +37,7 @@
     "speedFast": "Speed (Fast)",
     "accuracySlow": "Accuracy (Slow)",
     "douyinNewConfig": {
-      "title": "新版抖音配置",
+      "title": "抖音配置",
       "enableComments": "爬取评论",
       "enableCommentsDesc": "包含用户评论数据",
       "videoCount": "视频数量",

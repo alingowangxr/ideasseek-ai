@@ -6,14 +6,19 @@
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "ts-node lib/services/clustering/test-simple.ts",
+    "test:quick": "ts-node lib/services/clustering/test-simple.ts"
   },
   "dependencies": {
     "axios": "^1.7.7",
+    "density-clustering": "^1.3.0",
     "lucide-react": "^0.562.0",
+    "ml-distance": "^4.0.1",
     "next": "^15.5.9",
     "next-intl": "^4.7.0",
     "node-cron": "^3.0.3",
+    "openai": "^6.17.0",
     "react": "19.1.2",
     "react-dom": "19.1.2",
     "swr": "^2.3.6",
@@ -22,13 +27,15 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
+    "@types/node": "^20.19.31",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/uuid": "^10.0.0",
+    "dotenv": "^17.2.3",
     "eslint": "^9",
     "eslint-config-next": "^15.5.9",
     "tailwindcss": "^4",
+    "ts-node": "^10.9.2",
     "typescript": "^5"
   }
 }

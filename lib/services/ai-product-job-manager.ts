@@ -26,7 +26,7 @@ export class AIProductJobManager {
   }
 
   // 创建新任务
-  public createJob(keywords: string[], limit: number = 50, dataSource: DataSourceType = 'xiaohongshu', locale: string = 'zh'): string {
+  public createJob(keywords: string[], limit: number = 50, dataSource: DataSourceType = 'tiktok', locale: string = 'zh'): string {
     const jobId = uuidv4();
     const job: AIProductJob = {
       jobId,
