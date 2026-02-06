@@ -39,20 +39,40 @@ pip install -r requirements.txt
 Create `.env.local` with:
 
 ```env
-# Required: Zhipu AI GLM API
+# Required: TikHub API (data collection)
+TIKHUB_API_TOKEN=your_tikhub_api_token_here
+TIKHUB_USE_CHINA_DOMAIN=false
+TIKHUB_ENABLE_CACHE=true
+
+# Required: Zhipu AI GLM API (LLM analysis)
 GLM_API_KEY=your_glm_api_key_here
 GLM_MODEL_NAME=glm-4.6
 GLM_EMBEDDING_MODEL=embedding-3
 
-# Required: TikHub API
-TIKHUB_API_TOKEN=your_tikhub_api_token_here
-TIKHUB_USE_CHINA_DOMAIN=false
-TIKHUB_ENABLE_CACHE=true
+# Optional: Embedding Provider Selection
+EMBEDDING_PROVIDER=zhipuai  # Options: 'zhipuai' | 'openai' | 'auto'
+
+# Optional: OpenAI Embedding Configuration
+# OPENAI_API_KEY=sk-your_openai_api_key_here
+# OPENAI_EMBEDDING_MODEL=text-embedding-3-small
 ```
 
 Get API keys from:
 - Zhipu AI: https://open.bigmodel.cn/
 - TikHub: https://api.tikhub.io/
+- OpenAI: https://platform.openai.com/
+
+### Embedding Provider Options
+
+The system supports multiple embedding providers for semantic clustering:
+
+| Provider | Model | Dimensions | Environment Variables |
+|----------|-------|------------|----------------------|
+| Zhipu AI | embedding-3 | 1024 | `EMBEDDING_PROVIDER=zhipuai` |
+| OpenAI | text-embedding-3-small | 512 | `EMBEDDING_PROVIDER=openai` + `OPENAI_API_KEY` |
+| OpenAI | text-embedding-3-large | 3072 | `EMBEDDING_PROVIDER=openai` + `OPENAI_API_KEY` |
+
+**Note**: Current version requires Zhipu GLM for LLM analysis. Only embedding can be switched to OpenAI.
 
 ## Architecture Overview
 

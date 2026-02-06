@@ -557,7 +557,7 @@ export function createConfigFromEnv(): EmbeddingProviderConfig {
     zhipuai: {
       apiKey: process.env.GLM_API_KEY || '',
       model: (process.env.GLM_EMBEDDING_MODEL as any) || 'embedding-3',
-      baseURL: process.env.GLM_BASE_URL
+      baseURL: process.env.GLM_BASE_EMBEDDING_URL
     },
     batchSize: 100,
     timeout: 30000,

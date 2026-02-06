@@ -118,20 +118,41 @@ cp .env.example .env.local
 Edit `.env.local`:
 
 ```env
-# Zhipu AI GLM API Configuration (Required)
+# TikHub API Configuration (Required - Data Collection)
+# Register at: https://api.tikhub.io/
+TIKHUB_API_TOKEN=your_tikhub_api_token_here
+TIKHUB_USE_CHINA_DOMAIN=false
+TIKHUB_ENABLE_CACHE=true
+
+# LLM API Configuration (Required - AI Analysis)
+# Current support: Zhipu GLM (for pain point deep analysis)
 # Register at: https://open.bigmodel.cn/
 GLM_API_KEY=your_glm_api_key_here
 GLM_MODEL_NAME=glm-4.6
 GLM_EMBEDDING_MODEL=embedding-3
 
-# TikHub API Configuration (Required)
-# Register at: https://api.tikhub.io/
-TIKHUB_API_TOKEN=your_tikhub_api_token_here
-# Use China domain (optional)
-TIKHUB_USE_CHINA_DOMAIN=false
-# Enable cache (24-hour cache reduces costs)
-TIKHUB_ENABLE_CACHE=true
+# Embedding Provider Selection (Optional)
+# Options: 'zhipuai' (default) | 'openai' | 'auto'
+EMBEDDING_PROVIDER=zhipuai
+
+# If choosing OpenAI Embedding, configure:
+# OPENAI_API_KEY=sk-your_openai_api_key_here
+# OPENAI_EMBEDDING_MODEL=text-embedding-3-small
 ```
+
+#### Configuration Notes
+
+**Required:**
+1. **TIKHUB_API_TOKEN**: Data collection API, supports 6 platforms
+2. **GLM_API_KEY**: Zhipu AI API, for pain point deep analysis
+
+**Optional:**
+- **EMBEDDING_PROVIDER**: Choose embedding provider
+  - `zhipuai` (default): Use Zhipu AI embedding-3
+  - `openai`: Use OpenAI text-embedding-3-small
+  - `auto`: Auto-select (prioritizes OpenAI)
+
+> **Note**: Current version primarily uses Zhipu GLM for AI analysis. The embedding part can optionally use OpenAI as an alternative.
 
 ### 3. Run the Project
 
@@ -211,14 +232,15 @@ SeekMoney-ai/
 │   └── lib/
 │       └── design-tokens.ts      # Design system tokens
 ├── lib/
-│   ├── crawlers/
-│   │   └── douyin_new/           # New Douyin crawler module
 │   ├── services/
 │   │   ├── job-manager.ts        # Job management core
 │   │   ├── tikhub-client.ts      # TikHub API client
-│   │   ├── tikhub-service.ts     # TikHub data source service
-│   │   ├── douyin-service.ts     # Douyin data service
-│   │   ├── xhs-service.ts        # Xiaohongshu service (paused)
+│   │   ├── tikhub-service.ts     # Douyin data source service
+│   │   ├── tiktok-service.ts     # TikTok data source service
+│   │   ├── bilibili-service.ts   # Bilibili data source service
+│   │   ├── wechat-service.ts     # WeChat data source service
+│   │   ├── youtube-service.ts    # YouTube data source service
+│   │   ├── xhs-service.ts        # Xiaohongshu data source service
 │   │   ├── glm-service.ts        # GLM LLM service
 │   │   ├── clustering-service.ts # Clustering service (Python integration)
 │   │   ├── priority-scoring.ts   # Priority scoring system
@@ -226,11 +248,12 @@ SeekMoney-ai/
 │   │   ├── ai-product-job-manager.ts
 │   │   ├── data-source-factory.ts
 │   │   └── data-source-interface.ts
-│   ├── utils/
-│   │   └── python-detector.ts    # Python command detection
-│   ├── douyin_tool.py            # Douyin crawler script
-│   ├── xiaohongshu_tool.py       # Xiaohongshu crawler script (paused)
-│   └── semantic_clustering.py    # Semantic clustering (embedding + DBSCAN)
+│   ├── services/clustering/      # TypeScript clustering service
+│   │   ├── EmbeddingProvider.ts  # Embedding provider (supports OpenAI/GLM)
+│   │   └── ...
+│   ├── semantic_clustering.py    # Python semantic clustering
+│   └── utils/
+│       └── python-detector.ts    # Python command detection
 ├── .env.example                  # Environment variable template
 ├── package.json
 ├── requirements.txt              # Python dependencies
@@ -291,7 +314,7 @@ Sorted Results → Frontend Display
 
 ## API Configuration
 
-### TikHub API (Recommended)
+### TikHub API (Required - Data Collection)
 
 **Sign Up**: https://api.tikhub.io/
 
@@ -309,7 +332,11 @@ TIKHUB_USE_CHINA_DOMAIN=false  # Use China domain
 TIKHUB_ENABLE_CACHE=true       # Enable 24-hour cache
 ```
 
-### Zhipu AI GLM (Required)
+### LLM API (Required - AI Pain Point Analysis)
+
+The system uses LLM for deep pain point analysis. Currently supports Zhipu GLM.
+
+#### Zhipu GLM (Default)
 
 **Sign Up**: https://open.bigmodel.cn/
 
@@ -323,6 +350,35 @@ GLM_API_KEY=your_glm_api_key_here
 GLM_MODEL_NAME=glm-4.6
 GLM_EMBEDDING_MODEL=embedding-3
 ```
+
+### Embedding Configuration (Optional)
+
+Semantic clustering supports multiple embedding providers, switchable via environment variables.
+
+#### Configuration Options
+
+```env
+# Embedding Provider Selection
+EMBEDDING_PROVIDER=zhipuai  # Options: 'zhipuai' | 'openai' | 'auto'
+
+# Zhipu Embedding (default)
+GLM_EMBEDDING_MODEL=embedding-3
+
+# OpenAI Embedding (optional)
+OPENAI_API_KEY=sk-your_openai_api_key_here
+OPENAI_EMBEDDING_MODEL=text-embedding-3-small  # or text-embedding-3-large
+OPENAI_BASE_URL=https://api.openai.com/v1     # Optional, supports proxy
+```
+
+#### Provider Comparison
+
+| Provider | Model | Dimensions | Features |
+|----------|-------|------------|----------|
+| Zhipu AI | embedding-3 | 1024 | Optimized for Chinese, cost-effective |
+| OpenAI | text-embedding-3-small | 512 | Excellent for English, fast |
+| OpenAI | text-embedding-3-large | 3072 | Highest precision, higher cost |
+
+> **Note**: Current version LLM analysis only supports Zhipu GLM. The embedding part can optionally use OpenAI. Full OpenAI LLM support is under development.
 
 ## FAQ
 
@@ -351,6 +407,21 @@ A:
 
 ### Q: Which platforms are supported?
 A: Currently supports 6 platforms: Douyin, TikTok, Bilibili, WeChat Channels, YouTube, Xiaohongshu. All data sources are powered by TikHub API.
+
+### Q: Can I use OpenAI instead of Zhipu GLM?
+A: Partially. Current version:
+- **LLM Analysis (pain point deep analysis)**: Only supports Zhipu GLM, no alternative available
+- **Embedding (semantic clustering)**: Can use OpenAI by setting `EMBEDDING_PROVIDER=openai` and configuring `OPENAI_API_KEY`
+
+Full OpenAI LLM support is under development.
+
+### Q: How to use OpenAI Embedding?
+A: Configure in `.env.local`:
+```env
+EMBEDDING_PROVIDER=openai
+OPENAI_API_KEY=sk-your_openai_api_key_here
+OPENAI_EMBEDDING_MODEL=text-embedding-3-small  # or text-embedding-3-large
+```
 
 ### Q: What does data quality grading mean?
 A:

@@ -180,7 +180,7 @@ export class TikHubAPIClient {
 
     this.client = axios.create({
       baseURL,
-      timeout: config.timeout || 30000,
+      timeout: config.timeout || 60000,
       headers: {
         'Authorization': `Bearer ${config.apiToken}`,
         'Content-Type': 'application/json',
@@ -223,23 +223,102 @@ export class TikHubAPIClient {
   }
 
   /**
+   * 带重试的请求方法
+   */
+  private async requestWithRetry<T>(
+    requestFn: () => Promise<T>,
+    maxRetries: number = 3,
+    delayMs: number = 1000
+  ): Promise<T> {
+    let lastError: any;
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        return await requestFn();
+      } catch (error: any) {
+        lastError = error;
+        
+        if (axios.isAxiosError(error)) {
+          const errorInfo = {
+            attempt,
+            maxRetries,
+            code: error.code,
+            message: error.message,
+            hasResponse: !!error.response,
+            status: error.response?.status,
+            hasRequest: !!error.request,
+            url: error.config?.url,
+            method: error.config?.method
+          };
+          
+          console.error(`[TikHub API] 请求失败 (尝试 ${attempt}/${maxRetries}):`, errorInfo);
+          
+          if (error.response) {
+            console.error(`[TikHub API] 响应错误详情:`, {
+              status: error.response.status,
+              data: error.response.data,
+              headers: error.response.headers
+            });
+
+            // 只对服务器错误 (5xx) 进行重试
+            // 4xx 客户端错误不应重试，直接抛出
+            if (error.response.status >= 400 && error.response.status < 500) {
+              console.error(`[TikHub API] 客户端错误 (${error.response.status})，不再重试`);
+              throw error;
+            } else if (error.response.status >= 500) {
+              console.error(`[TikHub API] 服务器错误 (${error.response.status})，将重试`);
+            }
+          } else if (error.request) {
+            console.error(`[TikHub API] 无响应错误详情:`, {
+              message: error.message,
+              code: error.code,
+              errno: (error as any).errno,
+              syscall: (error as any).syscall
+            });
+          }
+        } else {
+          console.error(`[TikHub API] 非axios错误 (尝试 ${attempt}/${maxRetries}):`, {
+            message: error.message,
+            name: error.name,
+            stack: error.stack
+          });
+        }
+        
+        if (attempt < maxRetries) {
+          const delay = delayMs * attempt;
+          console.log(`[TikHub API] 等待 ${delay}ms 后重试...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+      }
+    }
+    
+    throw lastError;
+  }
+
+  /**
    * 搜索视频
    */
   async searchVideos(params: SearchRequest): Promise<SearchResponse> {
-    // 检查缓存
-    const cacheKey = `search_${JSON.stringify(params)}`;
-    const cached = this.getFromCache(cacheKey);
-    if (cached) {
-      this.cacheHits++;
-      console.log('[TikHub API] Using cached search result');
-      return cached;
-    }
-    this.cacheMisses++;
+    return this.requestWithRetry(async () => {
+      const cacheKey = `search_${JSON.stringify(params)}`;
+      const cached = this.getFromCache(cacheKey);
+      if (cached) {
+        this.cacheHits++;
+        console.log('[TikHub API] Using cached search result');
+        return cached;
+      }
+      this.cacheMisses++;
 
-    this.requestCount++;
-    this.searchRequests++;
+      this.requestCount++;
+      this.searchRequests++;
 
-    try {
+      console.log(`[TikHub API] 发起搜索请求:`, {
+        keyword: params.keyword,
+        cursor: params.cursor,
+        sort_type: params.sort_type,
+        publish_time: params.publish_time
+      });
+
       const response = await this.client.post<SearchResponse>(
         '/api/v1/douyin/search/fetch_general_search_v1',
         {
@@ -248,7 +327,7 @@ export class TikHubAPIClient {
           sort_type: params.sort_type || '0',
           publish_time: params.publish_time || '0',
           filter_duration: params.filter_duration || '0',
-          content_type: params.content_type || '1', // 默认只获取视频
+          content_type: params.content_type || '1',
           search_id: '',
           backtrace: ''
         }
@@ -256,7 +335,6 @@ export class TikHubAPIClient {
 
       const data = response.data;
 
-      // 添加详细的 API 响应日志
       console.log('[TikHub API] 搜索响应详情:', {
         code: data.code,
         message: data.message,
@@ -274,7 +352,6 @@ export class TikHubAPIClient {
         dataKeys: data.data ? Object.keys(data.data) : []
       });
 
-      // 如果数据量较少，输出完整数据结构以便调试
       if (data.data?.data) {
         const dataStr = JSON.stringify(data.data.data);
         if (dataStr.length < 500) {
@@ -284,29 +361,14 @@ export class TikHubAPIClient {
         }
       }
 
-      // 存储缓存
       if (data.cache_url) {
         this.setCache(cacheKey, data, data.cache_url);
       }
 
-      // 更新成本预估
       this.costEstimate += this.COST_PER_REQUEST;
 
       return data;
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        if (error.response) {
-          throw new Error(
-            `TikHub API 搜索失败: ${error.response.status} ${error.response.data?.message || error.message}`
-          );
-        } else {
-          throw new Error(
-            `TikHub API 搜索失败: ${error.message}`
-          );
-        }
-      }
-      throw error;
-    }
+    }, 3, 1500);
   }
 
   /**
@@ -317,67 +379,60 @@ export class TikHubAPIClient {
     cursor: number = 0,
     count: number = 20
   ): Promise<CommentsResponse> {
-    // 检查缓存
-    const cacheKey = `comments_${awemeId}_${cursor}_${count}`;
-    const cached = this.getFromCache(cacheKey);
-    if (cached) {
-      this.cacheHits++;
-      console.log('[TikHub API] Using cached comments result');
-      return cached;
-    }
-    this.cacheMisses++;
-
-    this.requestCount++;
-    this.commentsRequests++;
-
     try {
-      const response = await this.client.get<CommentsResponse>(
-        '/api/v1/douyin/web/fetch_video_comments',
-        {
-          params: {
-            aweme_id: awemeId,
-            cursor: cursor.toString(),
-            count: count.toString()
-          }
+      return await this.requestWithRetry(async () => {
+        const cacheKey = `comments_${awemeId}_${cursor}_${count}`;
+        const cached = this.getFromCache(cacheKey);
+        if (cached) {
+          this.cacheHits++;
+          console.log('[TikHub API] Using cached comments result');
+          return cached;
         }
-      );
+        this.cacheMisses++;
 
-      const data = response.data;
+        this.requestCount++;
+        this.commentsRequests++;
 
-      // 存储缓存
-      if (data.cache_url) {
-        this.setCache(cacheKey, data, data.cache_url);
-      }
+        console.log(`[TikHub API] 发起评论请求:`, {
+          awemeId,
+          cursor,
+          count
+        });
 
-      // 更新成本预估
-      this.costEstimate += this.COST_PER_REQUEST;
-
-      return data;
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        // 对于 400 错误，返回空评论列表而不是抛出错误
-        if (error.response?.status === 400) {
-          console.warn(`[TikHub API] 视频 ${awemeId} 评论获取失败 (400)，返回空列表`);
-          return {
-            code: 200,
-            message: '评论获取失败，返回空列表',
-            data: {
-              comments: [],
-              cursor: 0,
-              has_more: false,
-              total: 0
+        const response = await this.client.get<CommentsResponse>(
+          '/api/v1/douyin/web/fetch_video_comments',
+          {
+            params: {
+              aweme_id: awemeId,
+              cursor: cursor.toString(),
+              count: count.toString()
             }
-          };
+          }
+        );
+
+        const data = response.data;
+
+        if (data.cache_url) {
+          this.setCache(cacheKey, data, data.cache_url);
         }
-        if (error.response) {
-          throw new Error(
-            `TikHub API 评论获取失败: ${error.response.status} ${error.response.data?.message || error.message}`
-          );
-        } else {
-          throw new Error(
-            `TikHub API 评论获取失败: ${error.message}`
-          );
-        }
+
+        this.costEstimate += this.COST_PER_REQUEST;
+
+        return data;
+      }, 3, 1500);
+    } catch (error: any) {
+      if (axios.isAxiosError(error) && error.response?.status === 400) {
+        console.warn(`[TikHub API] 视频 ${awemeId} 评论获取失败 (400)，返回空列表`);
+        return {
+          code: 200,
+          message: '评论获取失败，返回空列表',
+          data: {
+            comments: [],
+            cursor: 0,
+            has_more: false,
+            total: 0
+          }
+        };
       }
       throw error;
     }
@@ -1411,9 +1466,15 @@ export class TikHubAPIClient {
  * 创建默认的 TikHub API 客户端实例
  */
 export function createTikHubClient(): TikHubAPIClient {
-  const apiToken = process.env.TIKHUB_API_TOKEN ||
-    process.env.TIKHUB_API_KEY ||
-    'vZdfXsQag0amkXarPbOZ8S3nNTqVRrVysjLT4kjaa6yL0gTnBk/aTAi8aA==';
+  const apiToken = process.env.TIKHUB_API_TOKEN || process.env.TIKHUB_API_KEY;
+
+  if (!apiToken) {
+    throw new Error(
+      'TIKHUB_API_TOKEN or TIKHUB_API_KEY environment variable is required. ' +
+      'Please set it in your .env.local file. ' +
+      'Get your API token from: https://api.tikhub.io/'
+    );
+  }
 
   return new TikHubAPIClient({
     apiToken,

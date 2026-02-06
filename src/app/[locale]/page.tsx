@@ -238,9 +238,6 @@ export default function Home() {
           <Link href="/" className="text-[#18181B] hover:text-amber-600 transition">
             {tNav('dashboard')}
           </Link>
-          <Link href="/ai-product" className="hover:text-[#18181B] transition">
-            {tNav('aiProduct')}
-          </Link>
         </div>
         <div className="flex items-center gap-3">
           <LanguageSwitcher />

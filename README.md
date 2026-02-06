@@ -2,14 +2,13 @@
 
 # SeekMoney - 找商机：用户痛点发现器
 
-![logo](./assets/logo.png)
 
-一个帮助个人开发者从社交媒体自动发现用户核心痛点的 Web 应用，支持智能聚类分析和 AI 产品方案生成。
+一个帮助创业者从社交媒体找商机，自动发现用户核心痛点的 Web 应用，支持智能聚类分析和产品方案生成。
 
 **核心功能：**
 - 多平台数据采集（抖音、小红书、TikTok、Bilibili、微信视频号、YouTube）
-- 基于 GLM embedding-3 + DBSCAN 的语义聚类算法
-- 调用 GLM-4.6 思考模型深度分析用户痛点
+- 基于 openai兼容/GLM + embedding + DBSCAN 的语义聚类算法
+- 调用  openai兼容/GLM-4.7 思考模型深度分析用户痛点
 - 智能优先级评分系统（需求强度 + 市场规模 + 竞争度）
 - 完整的中英文双语支持
 
@@ -25,10 +24,10 @@
   - 小红书
 - **智能语义聚类**
   - 视频/评论分别聚类，避免语义层次混淆
-  - 基于 GLM embedding-3 的向量表示
+  - 基于  openai兼容/GLM embedding  的向量表示
   - DBSCAN 密度聚类算法，自动发现主题
   - 支持多种 embedding 提供商（GLM、OpenAI）
-- **深度 AI 分析**（GLM-4.6 思考模型）
+- **深度 AI 分析**（ openai兼容/GLM-4.7 思考模型）
   - 痛点深度：表面痛点 → 根本原因 → 用户场景 → 情感强度
   - 市场格局：现有方案 → 未满足需求 → 机会分析
   - MVP 计划：核心功能 → 验证假设 → 首批用户 → 成本估算
@@ -121,20 +120,31 @@ cp .env.example .env.local
 编辑 `.env.local` 文件：
 
 ```env
-# 智谱AI GLM API配置 (必需)
-# 注册地址: https://open.bigmodel.cn/
-GLM_API_KEY=your_glm_api_key_here
-GLM_MODEL_NAME=glm-4.6
-GLM_EMBEDDING_MODEL=embedding-3
-
-# TikHub API 配置 (必需)
+# TikHub API 配置 (必需 - 数据采集)
 # 注册地址: https://api.tikhub.io/
 TIKHUB_API_TOKEN=your_tikhub_api_token_here
-# 使用中国域名（可选）
 TIKHUB_USE_CHINA_DOMAIN=false
-# 是否启用缓存（24小时缓存可降低成本）
 TIKHUB_ENABLE_CACHE=true
+
+# LLM API 配置 (必需 - AI 分析)
+# 当前支持:  openai兼容/智谱 GLM (用于痛点深度分析)
+# 注册地址: https://open.bigmodel.cn/
+GLM_API_KEY=your_glm_api_key_here
+GLM_MODEL_NAME=glm-4.7
+GLM_EMBEDDING_MODEL=embedding-3
+  
+
+# 如果选择使用 OpenAI Embedding，需要配置: 
+# GLM_EMBEDDING_MODEL=text-embedding-3-small
 ```
+
+#### 配置说明
+
+**必需配置：**
+1. **TIKHUB_API_TOKEN**：数据采集 API，支持 6 个平台
+2. **GLM_API_KEY**：智谱 AI API，用于痛点深度分析
+ 
+ 
 
 ### 3. 运行项目
 
@@ -160,12 +170,7 @@ npm run start
 5. 点击任意行查看详细原文，或导出 CSV
 
 > **TikHub API 说明**：基于 TikHub API 的数据获取服务，无需登录，按需付费。每次分析约 ¥0.01-0.5，具体取决于数据量。
-
-### AI 产品建议（/ai-product）
-
-1. 输入目标领域的关键词
-2. AI 将分析用户反馈，生成完整产品方案
-3. 查看产品名称、功能、技术栈、开发计划等
+ 
 
 ### 语言切换
 
@@ -214,29 +219,31 @@ SeekMoney-ai/
 │   └── lib/
 │       └── design-tokens.ts      # 设计系统标记
 ├── lib/
-│   ├── crawlers/
-│   │   └── douyin_new/           # 新版抖音爬虫模块
 │   ├── services/
 │   │   ├── job-manager.ts        # 任务管理核心
 │   │   ├── tikhub-client.ts      # TikHub API 客户端
-│   │   ├── tikhub-service.ts     # TikHub 数据源服务
-│   │   ├── douyin-service.ts     # 抖音数据服务
-│   │   ├── xhs-service.ts        # 小红书服务(暂停)
-│   │   ├── glm-service.ts        # GLM大模型服务
+│   │   ├── tikhub-service.ts     # 抖音数据源服务
+│   │   ├── tiktok-service.ts     # TikTok 数据源服务
+│   │   ├── bilibili-service.ts   # Bilibili 数据源服务
+│   │   ├── wechat-service.ts     # 微信数据源服务
+│   │   ├── youtube-service.ts    # YouTube 数据源服务
+│   │   ├── xhs-service.ts        # 小红书数据源服务
+│   │   ├── glm-service.ts        # GLM 大模型服务
 │   │   ├── clustering-service.ts # 聚类服务(Python集成)
 │   │   ├── priority-scoring.ts   # 优先级评分系统
 │   │   ├── ai-product-service.ts # AI产品分析
 │   │   ├── ai-product-job-manager.ts
 │   │   ├── data-source-factory.ts
 │   │   └── data-source-interface.ts
-│   ├── utils/
-│   │   └── python-detector.ts    # Python命令检测
-│   ├── douyin_tool.py            # 抖音爬虫脚本
-│   ├── xiaohongshu_tool.py       # 小红书爬虫脚本(暂停)
-│   └── semantic_clustering.py    # 语义聚类(embedding + DBSCAN)
+│   ├── services/clustering/      # TypeScript 聚类服务
+│   │   ├── EmbeddingProvider.ts  # Embedding 提供商(支持 OpenAI/GLM)
+│   │   └── ...
+│   ├── semantic_clustering.py    # Python 语义聚类
+│   └── utils/
+│       └── python-detector.ts    # Python 命令检测
 ├── .env.example                  # 环境变量模板
 ├── package.json
-├── requirements.txt              # Python依赖
+├── requirements.txt              # Python 依赖
 └── tsconfig.json
 ```
 
@@ -250,7 +257,7 @@ SeekMoney-ai/
 | 数据请求 | SWR (任务状态轮询) |
 | 后端 | Next.js API Routes |
 | 数据采集 | TikHub API |
-| AI 分析 | 智谱 GLM-4.6（思考模型）+ embedding-3 |
+| AI 分析 | 智谱 GLM-4.7（思考模型）+ embedding-3 |
 | 聚类算法 | GLM embedding-3 + DBSCAN / TypeScript 原生聚类 |
 | 任务队列 | 内存任务管理（支持异步处理） |
 
@@ -274,7 +281,7 @@ Python/TS 聚类服务
     ↓
 聚类结果（含代表性文本）
     ↓
-GLM-4.6 深度分析（每类）
+GLM-4.7 深度分析（每类）
   - 痛点深度（表面 → 根因 → 场景）
   - 市场格局（现有方案 → 未满足需求）
   - MVP 计划（功能 → 验证 → 时间线）
@@ -294,7 +301,7 @@ GLM-4.6 深度分析（每类）
 
 ## API 配置
 
-### TikHub API（推荐使用）
+### TikHub API（必需 - 数据采集）
 
 **注册地址**：https://api.tikhub.io/
 
@@ -311,22 +318,7 @@ TIKHUB_API_TOKEN=your_tikhub_api_token_here
 TIKHUB_USE_CHINA_DOMAIN=false  # 是否使用中国域名
 TIKHUB_ENABLE_CACHE=true       # 启用 24 小时缓存
 ```
-
-### 智谱 AI GLM（必需）
-
-**注册地址**：https://open.bigmodel.cn/
-
-**模型说明**：
-- `glm-4.6`：最新思考模型，支持深度推理
-- `embedding-3`：语义向量模型，用于聚类
-
-**配置示例**：
-```env
-GLM_API_KEY=your_glm_api_key_here
-GLM_MODEL_NAME=glm-4.6
-GLM_EMBEDDING_MODEL=embedding-3
-```
-
+ 
 ## 常见问题
 
 ### Q: TikHub API 如何收费？
@@ -355,32 +347,24 @@ A:
 ### Q: 支持哪些平台？
 A: 目前支持 6 个平台：抖音、TikTok、Bilibili、微信视频号、YouTube、小红书。所有数据源均基于 TikHub API。
 
+### Q: 可以使用 OpenAI 替代智谱 GLM 吗？
+A: 部分可以。当前版本：
+- **LLM 分析（痛点深度分析）**：仅支持智谱 GLM，暂不支持替代
+- **Embedding（语义聚类）**：可选择使用 OpenAI，通过设置 `EMBEDDING_PROVIDER=openai` 并配置 `OPENAI_API_KEY` 即可
+
+完整 OpenAI LLM 支持正在开发中。
+
+### Q: 如何使用 OpenAI Embedding？
+A: 在 `.env.local` 中配置：
+```env 
+ EMBEDDING_MODEL选择 text-embedding-3-small  # 或 text-embedding-3-large
+```
+
 ### Q: 数据质量分级是什么意思？
 A:
 - **exploratory（<50）**：样本量小，建议进一步验证
 - **preliminary（50-200）**：中等置信度，适合初期研究
 - **reliable（≥200）**：高置信度，统计显著
-
-## 开发计划
-
-### 已完成
-- [x] TikHub API 数据源支持（6 个平台）
-- [x] 痛点聚类分析
-- [x] AI 产品方案生成
-- [x] 深度抓取（含评论）
-- [x] 多语言支持（中文/英文）
-- [x] 数据质量分级
-- [x] 优先级评分系统
-- [x] 原始数据导出
-
-### 计划中
-- [ ] 用户历史记录保存
-- [ ] 更多数据源（知乎、微博、Instagram）
-- [ ] 趋势分析功能
-- [ ] 竞品分析模块
-- [ ] 数据库持久化
-- [ ] 用户认证系统
-- [ ] 团队协作功能
 
 ## 许可证
 

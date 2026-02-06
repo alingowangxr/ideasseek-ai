@@ -144,9 +144,6 @@ export default function AIProductPage() {
           <Link href="/" className="hover:text-[#18181B] transition">
             Dashboard
           </Link>
-          <Link href="/ai-product" className="text-[#18181B] hover:text-amber-600 transition">
-            AI Product
-          </Link>
         </div>
         <button className="w-8 h-8 rounded-full bg-[#E5E4DE] flex items-center justify-center hover:bg-[#F3F2EE] transition">
           <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
