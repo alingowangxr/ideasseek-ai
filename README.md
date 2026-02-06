@@ -1,6 +1,6 @@
 [English](./README.EN.md) | 中文
 
-# DeepPoint - 用户痛点发现器
+# SeekMoney - 找商机：用户痛点发现器
 
 ![logo](./assets/logo.png)
 
@@ -63,8 +63,8 @@
 
 ```bash
 # 克隆项目
-git clone https://github.com/weiyf2/deeppoint-ai.git
-cd deeppoint-ai
+git clone https://github.com/weiyf2/SeekMoney-ai.git
+cd SeekMoney-ai
 
 # 安装 Node.js 依赖
 npm install
@@ -149,7 +149,7 @@ npm run start
 ## 项目结构
 
 ```
-deeppoint-ai/
+SeekMoney-ai/
 ├── src/
 │   ├── app/
 │   │   ├── [locale]/             # 国际化动态路由

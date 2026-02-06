@@ -5,6 +5,7 @@ import { DataSourceType, TikTokCrawlOptions } from './data-source-interface';
 import { ClusteringService, ClusterResult } from './clustering-service';
 import { GLMService } from './glm-service';
 import { PriorityScorer, PriorityScore } from './priority-scoring';
+import { AnalysisStorageService, VideoData, CommentData, ClusterData, ClusteringStats, AnalysisSummary, AnalysisMetadata } from './analysis-storage-service';
 
 // 声明全局变量类型
 declare global {
@@ -89,11 +90,13 @@ class JobManagerImpl {
   private clusteringService: ClusteringService;
   private glmService: GLMService;
   private priorityScorer: PriorityScorer;
+  private storageService: AnalysisStorageService;
 
   constructor() {
     this.clusteringService = new ClusteringService();
     this.glmService = new GLMService();
     this.priorityScorer = new PriorityScorer();
+    this.storageService = new AnalysisStorageService();
     console.log('[JobManagerImpl] 初始化 JobManager');
   }
 
@@ -523,13 +526,153 @@ class JobManagerImpl {
         averageClusterSize
       };
 
-      // 步骤6: 完成任务
+      // 步骤6: 完成任务并保存数据
       job.results = results;
       job.status = 'completed';
       job.progress = '分析完成';
 
+      // 保存分析结果到文件系统
+      this.saveAnalysisResults(job, results, allVideos, allComments, allRawTexts, totalDataSize, clusterCount, averageClusterSize);
+
     } catch (error) {
       this.updateJobStatus(jobId, 'failed', '任务失败', error instanceof Error ? error.message : '未知错误');
+    }
+  }
+
+  // 保存分析结果到文件系统
+  private async saveAnalysisResults(
+    job: Job,
+    results: ClusterResult[],
+    allVideos: RawVideoData[],
+    allComments: RawCommentData[],
+    allRawTexts: string[],
+    totalDataSize: number,
+    clusterCount: number,
+    averageClusterSize: number
+  ): Promise<void> {
+    try {
+      console.log('[JobManager] 开始保存分析结果...');
+
+      const sourceName = DataSourceFactory.getSourceDisplayName(job.dataSource);
+
+      // 准备视频数据
+      const videos: VideoData[] = allVideos.map(v => ({
+        title: v.title,
+        author: v.author,
+        video_url: v.video_url,
+        publish_time: v.publish_time,
+        likes: v.likes,
+        collected_at: v.collected_at,
+        comment_count: v.comment_count,
+        description: v.description
+      }));
+
+      // 准备评论数据
+      const comments: CommentData[] = allComments.map(c => ({
+        video_title: c.video_title,
+        comment_text: c.comment_text,
+        username: c.username,
+        likes: c.likes
+      }));
+
+      // 准备聚类数据
+      const clusters: ClusterData[] = results.map(result => ({
+        clusterId: parseInt(result.id, 10),
+        size: result.size,
+        videos: [],
+        comments: []
+      }));
+
+      // 准备聚类统计
+      const clusteringStats: ClusteringStats = {
+        totalClusters: clusterCount,
+        totalVideos: allVideos.length,
+        totalComments: allComments.length,
+        noisePoints: results.filter(r => parseInt(r.id, 10) < 0).reduce((sum, r) => sum + r.size, 0),
+        avgClusterSize: averageClusterSize,
+        processingTime: Date.now() - job.startTime
+      };
+
+      // 准备分析摘要
+      const summary: AnalysisSummary = {
+        overview: {
+          dataCollection: {
+            videosCollected: allVideos.length,
+            commentsCollected: allComments.length,
+            rawTextsCollected: allRawTexts.length,
+            dataSource: sourceName,
+            keywords: job.keywords
+          },
+          clustering: {
+            clustersFormed: clusterCount,
+            avgClusterSize: averageClusterSize,
+            noisePoints: clusteringStats.noisePoints
+          }
+        },
+        qualityAssessment: {
+          dataReliability: job.dataQuality?.level || 'preliminary',
+          recommendation: this.getQualityRecommendation(job.dataQuality?.level || 'preliminary', allVideos.length, allComments.length)
+        },
+        topClusters: results.slice(0, 5).map(r => ({
+          id: parseInt(r.id, 10),
+          size: r.size,
+          theme: r.analysis?.one_line_pain || '未命名聚类'
+        }))
+      };
+
+      // 准备元数据
+      const metadata: AnalysisMetadata = {
+        jobId: job.jobId,
+        keywords: job.keywords,
+        dataSource: sourceName,
+        createdAt: new Date(job.startTime).toISOString(),
+        totalVideos: allVideos.length,
+        totalComments: allComments.length,
+        totalRawTexts: allRawTexts.length,
+        clusterCount,
+        locale: job.locale,
+        deepCrawl: job.deepCrawl,
+        tikTokOptions: job.tikTokOptions
+      };
+
+      // 调用保存服务
+      const saveResult = await this.storageService.saveAll(
+        job.jobId,
+        job.keywords,
+        {
+          videos,
+          comments,
+          rawTexts: allRawTexts,
+          clusters,
+          stats: clusteringStats,
+          metadata,
+          summary
+        },
+        job.locale
+      );
+
+      if (saveResult.success) {
+        console.log('[JobManager] ✅ 分析结果已保存到:', saveResult.folderPath);
+        console.log('[JobManager] 保存的文件:', saveResult.files.join(', '));
+      } else {
+        console.error('[JobManager] ❌ 保存分析结果失败:', saveResult.error);
+      }
+    } catch (error) {
+      console.error('[JobManager] 保存分析结果时出错:', error);
+    }
+  }
+
+  // 获取质量建议
+  private getQualityRecommendation(level: string, videoCount: number, commentCount: number): string {
+    switch (level) {
+      case 'reliable':
+        return '数据量充足，分析结果可靠。建议基于聚类结果进行深入的产品开发和市场策略制定。';
+      case 'preliminary':
+        return '数据量中等，结果仅供参考。建议增加数据量或扩大关键词范围以获得更准确的分析。';
+      case 'exploratory':
+        return '数据量较少，结果为探索性质。建议增加抓取数量或尝试更多相关关键词。';
+      default:
+        return '请收集更多数据以获得可靠的分析结果。';
     }
   }
 
@@ -553,11 +696,13 @@ function getGlobalJobManager() {
       private clusteringService: ClusteringService;
       private glmService: GLMService;
       private priorityScorer: PriorityScorer;
+      private storageService: AnalysisStorageService;
 
       constructor() {
         this.clusteringService = new ClusteringService();
         this.glmService = new GLMService();
         this.priorityScorer = new PriorityScorer();
+        this.storageService = new AnalysisStorageService();
         console.log('[JobManager] 创建新的全局 JobManager 实例');
       }
 
@@ -680,8 +825,8 @@ function getGlobalJobManager() {
               // 深度抓取模式（含评论）
               this.updateJobStatus(jobId, 'processing', `正在深度抓取 "${keyword}" 相关数据（含评论）...`);
 
-              // 为 TikTok 和 TikHub 使用完整配置
-              const crawlOptions = (job.dataSource === 'tiktok' || job.dataSource === 'tikhub') && job.tikTokOptions
+              // 为 TikTok、TikHub、Bilibili、WeChat、YouTube 和 Xiaohongshu 使用完整配置
+              const crawlOptions = (job.dataSource === 'tiktok' || job.dataSource === 'tikhub' || job.dataSource === 'bilibili' || job.dataSource === 'wechat' || job.dataSource === 'youtube' || job.dataSource === 'xiaohongshu') && job.tikTokOptions
                 ? {
                     maxVideos: job.tikTokOptions.maxVideos,
                     maxCommentsPerVideo: job.tikTokOptions.maxCommentsPerVideo
@@ -1001,6 +1146,144 @@ function getGlobalJobManager() {
           }
         }
       }
+
+      // 保存分析结果到文件系统
+      private async saveAnalysisResults(
+        job: Job,
+        results: ClusterResult[],
+        allVideos: RawVideoData[],
+        allComments: RawCommentData[],
+        allRawTexts: string[],
+        totalDataSize: number,
+        clusterCount: number,
+        averageClusterSize: number
+      ): Promise<void> {
+        try {
+          console.log('[JobManager] 开始保存分析结果...');
+
+          const sourceName = DataSourceFactory.getSourceDisplayName(job.dataSource);
+
+          // 准备视频数据
+          const videos: VideoData[] = allVideos.map(v => ({
+            title: v.title,
+            author: v.author,
+            video_url: v.video_url,
+            publish_time: v.publish_time,
+            likes: v.likes,
+            collected_at: v.collected_at,
+            comment_count: v.comment_count,
+            description: v.description
+          }));
+
+          // 准备评论数据
+          const comments: CommentData[] = allComments.map(c => ({
+            video_title: c.video_title,
+            comment_text: c.comment_text,
+            username: c.username,
+            likes: c.likes
+          }));
+
+          // 准备聚类数据
+          const clusters: ClusterData[] = results.map(result => ({
+            clusterId: parseInt(result.id, 10),
+            size: result.size,
+            videos: [],
+            comments: []
+          }));
+
+          // 准备聚类统计
+          const clusteringStats: ClusteringStats = {
+            totalClusters: clusterCount,
+            totalVideos: allVideos.length,
+            totalComments: allComments.length,
+            noisePoints: results.filter(r => parseInt(r.id, 10) < 0).reduce((sum, r) => sum + r.size, 0),
+            avgClusterSize: averageClusterSize,
+            processingTime: Date.now() - job.startTime
+          };
+
+          // 准备分析摘要
+          const summary: AnalysisSummary = {
+            overview: {
+              dataCollection: {
+                videosCollected: allVideos.length,
+                commentsCollected: allComments.length,
+                rawTextsCollected: allRawTexts.length,
+                dataSource: sourceName,
+                keywords: job.keywords
+              },
+              clustering: {
+                clustersFormed: clusterCount,
+                avgClusterSize: averageClusterSize,
+                noisePoints: clusteringStats.noisePoints
+              }
+            },
+            qualityAssessment: {
+              dataReliability: job.dataQuality?.level || 'preliminary',
+              recommendation: this.getQualityRecommendation(job.dataQuality?.level || 'preliminary', allVideos.length, allComments.length)
+            },
+            topClusters: results.slice(0, 5).map(r => ({
+              id: parseInt(r.id, 10),
+              size: r.size,
+              theme: r.analysis?.one_line_pain || '未命名聚类'
+            }))
+          };
+
+          // 准备元数据
+          const metadata: AnalysisMetadata = {
+            jobId: job.jobId,
+            keywords: job.keywords,
+            dataSource: sourceName,
+            createdAt: new Date(job.startTime).toISOString(),
+            totalVideos: allVideos.length,
+            totalComments: allComments.length,
+            totalRawTexts: allRawTexts.length,
+            clusterCount,
+            locale: job.locale,
+            deepCrawl: job.deepCrawl,
+            tikTokOptions: job.tikTokOptions
+          };
+
+          // 调用保存服务
+          const saveResult = await this.storageService.saveAll(
+            job.jobId,
+            job.keywords,
+            {
+              videos,
+              comments,
+              rawTexts: allRawTexts,
+              clusters,
+              stats: clusteringStats,
+              metadata,
+              summary
+            },
+            job.locale
+          );
+
+          if (saveResult.success) {
+            console.log('[JobManager] ✅ 分析结果已保存到:', saveResult.folderPath);
+            console.log('[JobManager] 保存的文件:', saveResult.files.join(', '));
+          } else {
+            console.error('[JobManager] ❌ 保存分析结果失败:', saveResult.error);
+          }
+        } catch (error) {
+          console.error('[JobManager] 保存分析结果时出错:', error);
+        }
+      }
+
+      // 获取质量建议
+      private getQualityRecommendation(level: 'reliable' | 'preliminary' | 'exploratory', videoCount: number, commentCount: number): string {
+        const totalData = videoCount + commentCount;
+        switch (level) {
+          case 'reliable':
+            return '数据量充足，分析结果具有较高可信度。';
+          case 'preliminary':
+            return `当前收集了 ${totalData} 条数据，建议补充更多样本以提高分析深度。`;
+          case 'exploratory':
+            return `数据量较少（${totalData} 条），结果仅供参考，建议扩大数据收集范围或增加关键词。`;
+          default:
+            return '建议收集更多数据以提高分析质量。';
+        }
+      }
     }
 
     global._jobManagerInstance = new JobManagerImpl();
@@ -1008,9 +1291,6 @@ function getGlobalJobManager() {
   }
   return global._jobManagerInstance;
 }
-
-// 导出 JobManager 类型（用于类型引用）
-export type { Job, CreateJobOptions, RawVideoData, RawCommentData, ClusteredDataGroup };
 
 // 创建全局单例实例（在热重载时保持不变）
 // 使用 globalThis 来确保实例在模块重载时保持不变

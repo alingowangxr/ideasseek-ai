@@ -30,7 +30,7 @@ const args = process.argv.slice(2);
 const testType = args[0] || 'all';
 
 async function main() {
-  console.log('\n🧪 DeepPoint AI - 语义聚类服务测试\n');
+  console.log('\n🧪 SeekMoney AI - 语义聚类服务测试\n');
 
   // 检查环境变量
   const hasOpenAI = !!process.env.OPENAI_API_KEY;

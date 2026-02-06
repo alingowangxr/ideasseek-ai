@@ -1,4 +1,4 @@
-# DeepPoint AI - 语义聚类系统技术文档
+# SeekMoney AI - 语义聚类系统技术文档
 
 ## 目录
 
@@ -19,7 +19,7 @@
 
 ### 设计理念
 
-DeepPoint AI 的语义聚类系统采用 **智谱AI Embedding + DBSCAN** 的技术方案，替代了原有的 Jaccard 相似度聚类算法。该设计旨在从社交媒体用户评论中自动识别和提取有意义的用户痛点聚类。
+SeekMoney AI 的语义聚类系统采用 **智谱AI Embedding + DBSCAN** 的技术方案，替代了原有的 Jaccard 相似度聚类算法。该设计旨在从社交媒体用户评论中自动识别和提取有意义的用户痛点聚类。
 
 ### 核心优势
 
@@ -731,4 +731,4 @@ pip install numpy scikit-learn python-dotenv
 
 *文档版本: 1.0*
 *最后更新: 2025年*
-*维护者: DeepPoint AI 团队*
+*维护者: SeekMoney AI 团队*

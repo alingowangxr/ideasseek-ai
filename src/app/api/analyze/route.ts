@@ -33,17 +33,17 @@ export async function POST(request: NextRequest) {
     }
 
     // 验证数据源
+    const supportedSources: DataSourceType[] = ['tikhub', 'tiktok', 'bilibili', 'wechat', 'youtube', 'xiaohongshu'];
     let validDataSource: DataSourceType;
-    if (dataSource === 'tiktok') {
-      validDataSource = 'tiktok';
-    } else if (dataSource === 'tikhub') {
-      validDataSource = 'tikhub';
+
+    if (supportedSources.includes(dataSource as DataSourceType)) {
+      validDataSource = dataSource as DataSourceType;
     } else {
-      validDataSource = 'tiktok';  // 默认使用 TikTok
+      validDataSource = 'tikhub';  // 默认使用 TikHub (推荐)
     }
 
-    // 深度抓取支持 TikTok 和 TikHub
-    const enableDeepCrawl = deepCrawl && (validDataSource === 'tiktok' || validDataSource === 'tikhub');
+    // 深度抓取支持所有数据源
+    const enableDeepCrawl = deepCrawl;
 
     // TikTok 和 TikHub 使用相同的配置结构
     let tikTokOptions: TikTokCrawlOptions | undefined;

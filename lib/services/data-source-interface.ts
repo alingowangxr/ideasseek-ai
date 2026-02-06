@@ -1,6 +1,6 @@
 // 通用数据源接口定义
 
-export type DataSourceType = 'tikhub' | 'tiktok';
+export type DataSourceType = 'tikhub' | 'tiktok' | 'bilibili' | 'wechat' | 'youtube' | 'xiaohongshu';
 
 export interface DataSourceResult {
   rawTexts: string[];

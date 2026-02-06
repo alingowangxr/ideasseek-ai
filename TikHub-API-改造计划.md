@@ -938,7 +938,7 @@ describe('TikHubAPIClient', () => {
 ### 11.2 联系信息
 
 - TikHub Discord: https://discord.gg/aMEAS8Xsvz
-- 项目 GitHub: https://github.com/weiyf2/deeppoint-ai
+- 项目 GitHub: https://github.com/liangdabiao/SeekMoney-ai
 
 ### 11.3 变更记录
 

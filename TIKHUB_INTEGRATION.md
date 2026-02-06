@@ -2,7 +2,7 @@
 
 ## 概述
 
-本文档说明了 DeepPoint AI 系统中新增的 TikHub API 集成功能，包括抖音（Douyin）和 TikTok 数据源的实现。
+本文档说明了 SeekMoney AI 系统中新增的 TikHub API 集成功能，包括抖音（Douyin）和 TikTok 数据源的实现。
 
 **更新时间**: 2025年
 **API 提供商**: TikHub (https://tikhub.io)
@@ -498,4 +498,4 @@ console.log({
 
 ---
 
-*本文档由 DeepPoint AI 团队维护*
+*本文档由 SeekMoney AI 团队维护*

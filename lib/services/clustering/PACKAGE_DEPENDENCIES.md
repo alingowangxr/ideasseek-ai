@@ -146,7 +146,7 @@ function cosineDistance(a: number[], b: number[]): number {
 
 ```json
 {
-  "name": "deeppoint-clustering",
+  "name": "SeekMoney-clustering",
   "version": "1.0.0",
   "description": "Semantic clustering service with multi-provider embedding support",
   "main": "lib/services/clustering/index.ts",
@@ -200,7 +200,7 @@ ml-distance (^4.0.0)
 ### 1. 安装依赖
 
 ```bash
-cd D:\deeppoint-ai-main
+cd D:\SeekMoney-ai-main
 npm install openai density-clustering ml-distance
 ```
 

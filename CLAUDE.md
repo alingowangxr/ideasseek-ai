@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-DeepPoint (用户痛点发现器) is a full-stack web application that helps indie developers and product managers automatically discover user pain points from Chinese social media platforms using AI-powered semantic clustering and deep analysis.
+SeekMoney (找商机：用户痛点发现器) is a full-stack web application that helps indie developers and product managers automatically discover user pain points from Chinese social media platforms using AI-powered semantic clustering and deep analysis.
 
 **Core Functionality:**
 - Crawls user-generated content from Douyin (TikTok China) and Xiaohongshu (Little Red Book)

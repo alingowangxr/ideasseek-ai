@@ -1,6 +1,6 @@
 English | [中文](./README.md)
 
-# DeepPoint - User Pain Point Discoverer
+# SeekMoney - User Pain Point Discoverer
 
 ![logo](./assets/logo.png)
 
@@ -63,8 +63,8 @@ A web application that helps indie developers automatically discover user pain p
 
 ```bash
 # Clone the project
-git clone https://github.com/your-username/deeppoint-ai.git
-cd deeppoint-ai
+git clone https://github.com/your-username/SeekMoney-ai.git
+cd SeekMoney-ai
 
 # Install Node.js dependencies
 npm install
@@ -149,7 +149,7 @@ Visit http://localhost:3000
 ## Project Structure
 
 ```
-deeppoint-ai/
+SeekMoney-ai/
 ├── src/
 │   ├── app/
 │   │   ├── [locale]/             # Internationalized dynamic routes

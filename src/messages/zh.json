@@ -1,7 +1,7 @@
 {
   "metadata": {
-    "title": "DeepPoint - Insight Intelligence",
-    "description": "从社交媒体发现用户痛点，智能分析产品机会"
+    "title": "SeekMoney - Insight Intelligence",
+    "description": "从社交媒体发现用户痛点，找商机，智能分析产品机会"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -23,7 +23,11 @@
     "dataSource": {
       "label": "数据源 / Source",
       "tiktok": "TikTok API",
-      "tikhub": "TikHub API (推荐)"
+      "tikhub": "douyin API",
+      "bilibili": "Bilibili API",
+      "wechat": "微信视频号 API",
+      "youtube": "YouTube API",
+      "xiaohongshu": "小红书 API"
     },
     "keywords": {
       "label": "关键词 / Keyword",

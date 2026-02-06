@@ -231,7 +231,7 @@ export default function Home() {
             A
           </div>
           <span className="font-bold text-xl tracking-tight text-[#18181B]">
-            DeepPoint<span className="text-gray-400 font-normal"> - ai </span>
+            SeekMoney<span className="text-gray-400 font-normal"> - ai </span>
           </span>
         </div>
         <div className="hidden sm:flex gap-6 text-sm font-medium text-gray-500">

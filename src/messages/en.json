@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "title": "DeepPoint - Insight Intelligence",
+    "title": "SeekMoney - Insight Intelligence",
     "description": "Discover user pain points from social media, intelligent product opportunity analysis"
   },
   "nav": {
@@ -23,7 +23,11 @@
     "dataSource": {
       "label": "Data Source",
       "tiktok": "TikTok API",
-      "tikhub": "TikHub API (Recommended)"
+      "tikhub": "douyin API (Recommended)",
+      "bilibili": "Bilibili API",
+      "wechat": "WeChat Channels API",
+      "youtube": "YouTube API",
+      "xiaohongshu": "Xiaohongshu (Little Red Book) API"
     },
     "keywords": {
       "label": "Keywords",

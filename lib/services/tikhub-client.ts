@@ -726,6 +726,685 @@ export class TikHubAPIClient {
 
     return result;
   }
+
+  // ==================== Bilibili API 方法 ====================
+
+  /**
+   * Bilibili 搜索参数
+   */
+  async searchBilibiliVideos(params: {
+    keyword: string;
+    order?: 'totalrank' | 'click' | 'pubdate' | 'dm' | 'stow';
+    page?: number;
+    page_size?: number;
+    duration?: 0 | 1 | 2 | 3 | 4;
+    pubtime_begin_s?: number;
+    pubtime_end_s?: number;
+  }): Promise<any> {
+    this.requestCount++;
+    this.searchRequests++;
+
+    const queryParams: any = {
+      keyword: params.keyword,
+      order: params.order || 'totalrank',
+      page: params.page || 1,
+      page_size: params.page_size || 42,
+      duration: params.duration || 0
+    };
+
+    if (params.pubtime_begin_s !== undefined) {
+      queryParams.pubtime_begin_s = params.pubtime_begin_s;
+    }
+    if (params.pubtime_end_s !== undefined) {
+      queryParams.pubtime_end_s = params.pubtime_end_s;
+    }
+
+    try {
+      const response = await this.client.get(
+        '/api/v1/bilibili/web/fetch_general_search',
+        { params: queryParams }
+      );
+
+      const data = response.data;
+
+      console.log('[Bilibili API] 搜索响应详情:', {
+        code: data.code,
+        message: data.message,
+        hasData: !!data.data,
+        hasDataData: !!data.data?.data,
+        hasResult: !!data.data?.data?.result,
+        resultCount: data.data?.data?.result?.length || 0,
+        cacheUrl: data.cache_url
+      });
+
+      // 存储缓存
+      if (data.cache_url) {
+        const cacheKey = `bilibili_search_${JSON.stringify(params)}`;
+        this.setCache(cacheKey, data, data.cache_url);
+      }
+
+      // 更新成本预估
+      this.costEstimate += this.COST_PER_REQUEST;
+
+      return data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        throw new Error(
+          `Bilibili API 搜索失败: ${error.response?.status} ${error.response?.data?.message || error.message}`
+        );
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * 获取 Bilibili 视频评论
+   */
+  async getBilibiliVideoComments(
+    bvId: string,
+    pn: number = 1
+  ): Promise<any> {
+    this.requestCount++;
+    this.commentsRequests++;
+
+    try {
+      const response = await this.client.get(
+        '/api/v1/bilibili/web/fetch_video_comments',
+        {
+          params: {
+            bv_id: bvId,
+            pn: pn.toString()
+          }
+        }
+      );
+
+      const data = response.data;
+
+      console.log('[Bilibili API] 评论响应:', {
+        code: data.code,
+        hasData: !!data.data,
+        hasReplies: !!data.data?.replies,
+        replyCount: data.data?.replies?.length || 0,
+        cacheUrl: data.cache_url
+      });
+
+      // 存储缓存
+      if (data.cache_url) {
+        const cacheKey = `bilibili_comments_${bvId}_${pn}`;
+        this.setCache(cacheKey, data, data.cache_url);
+      }
+
+      // 更新成本预估
+      this.costEstimate += this.COST_PER_REQUEST;
+
+      return data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        throw new Error(
+          `Bilibili API 评论获取失败: ${error.response?.status} ${error.response?.data?.message || error.message}`
+        );
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * 批量获取 Bilibili 视频评论
+   */
+  async getBilibiliVideoCommentsBatch(
+    bvIds: string[],
+    maxCommentsPerVideo: number
+  ): Promise<Map<string, any[]>> {
+    const result = new Map<string, any[]>();
+
+    for (const bvId of bvIds) {
+      try {
+        const comments: any[] = [];
+        let pn = 1;
+        let hasMore = true;
+
+        while (hasMore && comments.length < maxCommentsPerVideo) {
+          const response = await this.getBilibiliVideoComments(
+            bvId,
+            pn
+          );
+
+          if (response.code !== 200 || !response.data?.replies) {
+            console.warn('[Bilibili API] 评论响应格式不符合预期，停止获取评论');
+            break;
+          }
+
+          const replyList = response.data.replies;
+          comments.push(...replyList);
+
+          // Bilibili API 返回 page 信息
+          const page = response.data.data?.page;
+          if (page) {
+            hasMore = pn * page.size < page.count;
+          } else {
+            hasMore = replyList.length >= 20;
+          }
+
+          pn++;
+
+          console.log(`[Bilibili API] 已获取 ${comments.length} 条评论，has_more: ${hasMore}`);
+
+          // 避免请求过快
+          await this.delay(300);
+        }
+
+        result.set(bvId, comments);
+      } catch (error) {
+        console.error(`[Bilibili API] Failed to fetch comments for ${bvId}:`, error);
+        result.set(bvId, []);
+      }
+    }
+
+    return result;
+  }
+
+  // ==================== WeChat Channels API 方法 ====================
+
+  /**
+   * WeChat Channels 搜索参数
+   */
+  async searchWeChatVideos(params: {
+    keywords: string;
+    sessionBuffer?: string;
+  }): Promise<any> {
+    this.requestCount++;
+    this.searchRequests++;
+
+    const queryParams: any = {
+      keywords: params.keywords
+    };
+
+    // Only add session_buffer if it has a value
+    if (params.sessionBuffer && params.sessionBuffer.length > 0) {
+      queryParams.session_buffer = params.sessionBuffer;
+    }
+
+    console.log('[WeChat Channels API] 请求参数:', JSON.stringify(queryParams));
+
+    try {
+      const response = await this.client.get(
+        '/api/v1/wechat_channels/fetch_default_search',
+        { params: queryParams }
+      );
+
+      const data = response.data;
+
+      console.log('[WeChat Channels API] 搜索响应详情:', {
+        code: data.code,
+        message: data.message,
+        hasData: !!data.data,
+        hasMediaList: !!data.data?.media_list,
+        mediaCount: data.data?.media_list?.length || 0,
+        cacheUrl: data.cache_url
+      });
+
+      // 存储缓存
+      if (data.cache_url) {
+        const cacheKey = `wechat_search_${JSON.stringify(params)}`;
+        this.setCache(cacheKey, data, data.cache_url);
+      }
+
+      // 更新成本预估
+      this.costEstimate += this.COST_PER_REQUEST;
+
+      return data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.error('[WeChat Channels API] 请求失败:', {
+          status: error.response?.status,
+          statusText: error.response?.statusText,
+          data: error.response?.data,
+          config: {
+            url: error.config?.url,
+            params: error.config?.params
+          }
+        });
+        throw new Error(
+          `WeChat Channels API 搜索失败: ${error.response?.status} ${error.response?.data?.message || error.message}`
+        );
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * 获取 WeChat Channels 视频评论
+   */
+  async getWeChatVideoComments(
+    id: string,
+    lastBuffer?: string
+  ): Promise<any> {
+    this.requestCount++;
+    this.commentsRequests++;
+
+    const queryParams: any = {
+      id: id
+    };
+
+    if (lastBuffer) {
+      queryParams.lastBuffer = lastBuffer;
+    }
+
+    try {
+      const response = await this.client.get(
+        '/api/v1/wechat_channels/fetch_comments',
+        { params: queryParams }
+      );
+
+      const data = response.data;
+
+      console.log('[WeChat Channels API] 评论响应:', {
+        code: data.code,
+        hasData: !!data.data,
+        hasCommentInfo: !!data.data?.comment_info,
+        commentCount: data.data?.comment_info?.length || 0,
+        cacheUrl: data.cache_url
+      });
+
+      // 存储缓存
+      if (data.cache_url) {
+        const cacheKey = `wechat_comments_${id}_${lastBuffer || 'first'}`;
+        this.setCache(cacheKey, data, data.cache_url);
+      }
+
+      // 更新成本预估
+      this.costEstimate += this.COST_PER_REQUEST;
+
+      return data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        throw new Error(
+          `WeChat Channels API 评论获取失败: ${error.response?.status} ${error.response?.data?.message || error.message}`
+        );
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * 批量获取 WeChat Channels 视频评论
+   */
+  async getWeChatVideoCommentsBatch(
+    ids: string[],
+    maxCommentsPerVideo: number
+  ): Promise<Map<string, any[]>> {
+    const result = new Map<string, any[]>();
+
+    for (const id of ids) {
+      try {
+        const comments: any[] = [];
+        let lastBuffer = '';
+        let hasMore = true;
+
+        while (hasMore && comments.length < maxCommentsPerVideo) {
+          const response = await this.getWeChatVideoComments(
+            id,
+            lastBuffer
+          );
+
+          if (response.code !== 200 || !response.data?.comment_info) {
+            console.warn('[WeChat Channels API] 评论响应格式不符合预期，停止获取评论');
+            break;
+          }
+
+          const commentList = response.data.comment_info;
+          comments.push(...commentList);
+
+          // 检查是否还有更多评论
+          lastBuffer = response.data?.last_buffer || '';
+          hasMore = lastBuffer !== '' && commentList.length >= 10;
+
+          console.log(`[WeChat Channels API] 已获取 ${comments.length} 条评论，has_more: ${hasMore}`);
+
+          // 避免请求过快
+          await this.delay(300);
+        }
+
+        result.set(id, comments);
+      } catch (error) {
+        console.error(`[WeChat Channels API] Failed to fetch comments for ${id}:`, error);
+        result.set(id, []);
+      }
+    }
+
+    return result;
+  }
+
+  // ==================== YouTube API 方法 ====================
+
+  /**
+   * YouTube 搜索视频
+   */
+  async searchYouTubeVideos(params: {
+    search_query: string;
+    language_code?: string;
+    order_by?: 'this_week' | 'this_month' | 'this_year' | 'last_hour' | 'today';
+    country_code?: string;
+    continuation_token?: string;
+  }): Promise<any> {
+    this.requestCount++;
+    this.searchRequests++;
+
+    const queryParams: any = {
+      search_query: params.search_query,
+      language_code: params.language_code || 'en',
+      order_by: params.order_by || 'this_month',
+      country_code: params.country_code || 'us'
+    };
+
+    if (params.continuation_token) {
+      queryParams.continuation_token = params.continuation_token;
+    }
+
+    try {
+      const response = await this.client.get(
+        '/api/v1/youtube/web/search_video',
+        { params: queryParams }
+      );
+
+      const data = response.data;
+
+      console.log('[YouTube API] 搜索响应详情:', {
+        code: data.code,
+        message: data.message,
+        numberOfVideos: data.data?.number_of_videos,
+        cacheUrl: data.cache_url
+      });
+
+      // 存储缓存
+      if (data.cache_url) {
+        const cacheKey = `youtube_search_${JSON.stringify(queryParams)}`;
+        this.setCache(cacheKey, data, data.cache_url);
+      }
+
+      // 更新成本预估
+      this.costEstimate += this.COST_PER_REQUEST;
+
+      return data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        throw new Error(
+          `YouTube API 搜索失败: ${error.response?.status} ${error.response?.data?.message || error.message}`
+        );
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * 获取 YouTube 视频评论
+   */
+  async getYouTubeVideoComments(
+    videoId: string,
+    continuationToken?: string
+  ): Promise<any> {
+    this.requestCount++;
+    this.commentRequests++;
+
+    const queryParams: any = {
+      video_id: videoId,
+      need_format: true,
+      sort_by: 'top'
+    };
+
+    if (continuationToken) {
+      queryParams.continuation_token = continuationToken;
+    }
+
+    try {
+      const response = await this.client.get(
+        '/api/v1/youtube/web/get_video_comments',
+        { params: queryParams }
+      );
+
+      const data = response.data;
+
+      console.log('[YouTube API] 评论响应详情:', {
+        code: data.code,
+        message: data.message,
+        commentCount: data.data?.comments?.length || 0,
+        cacheUrl: data.cache_url
+      });
+
+      // 存储缓存
+      if (data.cache_url) {
+        const cacheKey = `youtube_comments_${videoId}_${continuationToken || 'first'}`;
+        this.setCache(cacheKey, data, data.cache_url);
+      }
+
+      // 更新成本预估
+      this.costEstimate += this.COST_PER_REQUEST;
+
+      return data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        throw new Error(
+          `YouTube API 评论获取失败: ${error.response?.status} ${error.response?.data?.message || error.message}`
+        );
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * 批量获取 YouTube 视频评论
+   */
+  async getYouTubeVideoCommentsBatch(
+    videoIds: string[],
+    maxCommentsPerVideo: number
+  ): Promise<Map<string, any[]>> {
+    const result = new Map<string, any[]>();
+
+    for (const videoId of videoIds) {
+      try {
+        const comments: any[] = [];
+        let continuationToken = '';
+        let hasMore = true;
+
+        while (hasMore && comments.length < maxCommentsPerVideo) {
+          const response = await this.getYouTubeVideoComments(
+            videoId,
+            continuationToken
+          );
+
+          if (response.code !== 200 || !response.data?.comments) {
+            console.warn('[YouTube API] 评论响应格式不符合预期，停止获取评论');
+            break;
+          }
+
+          const commentList = response.data.comments;
+          comments.push(...commentList);
+
+          // 检查是否还有更多评论
+          continuationToken = response.data?.continuation_token || '';
+          hasMore = continuationToken !== '' && commentList.length >= 10;
+
+          console.log(`[YouTube API] 已获取 ${comments.length} 条评论，has_more: ${hasMore}`);
+
+          // 避免请求过快
+          await this.delay(300);
+        }
+
+        result.set(videoId, comments);
+      } catch (error) {
+        console.error(`[YouTube API] Failed to fetch comments for ${videoId}:`, error);
+        result.set(videoId, []);
+      }
+    }
+
+    return result;
+  }
+
+  // ==================== Xiaohongshu (小红书) API 方法 ====================
+
+  /**
+   * Xiaohongshu 搜索笔记
+   */
+  async searchXiaohongshuNotes(params: {
+    keyword: string;
+    page?: number;
+    sort?: 'general' | 'popularity_descending' | 'time_descending' | 'comment_descending' | 'collect_descending';
+    noteType?: '_0' | '_1' | '_2' | '_3';
+    noteTime?: string;
+  }): Promise<any> {
+    this.requestCount++;
+    this.searchRequests++;
+
+    const queryParams: any = {
+      keyword: params.keyword,
+      page: params.page || 1,
+      sort: params.sort || 'general',
+      noteType: params.noteType || '_0'
+    };
+
+    if (params.noteTime) {
+      queryParams.noteTime = params.noteTime;
+    }
+
+    try {
+      const response = await this.client.get(
+        '/api/v1/xiaohongshu/web/search_notes',
+        { params: queryParams }
+      );
+
+      const data = response.data;
+
+      console.log('[Xiaohongshu API] 搜索响应详情:', {
+        code: data.code,
+        message: data.message,
+        hasData: !!data.data,
+        hasItems: !!data.data?.items,
+        itemCount: data.data?.items?.length || 0,
+        cacheUrl: data.cache_url
+      });
+
+      // 存储缓存
+      if (data.cache_url) {
+        const cacheKey = `xiaohongshu_search_${JSON.stringify(queryParams)}`;
+        this.setCache(cacheKey, data, data.cache_url);
+      }
+
+      // 更新成本预估
+      this.costEstimate += this.COST_PER_REQUEST;
+
+      return data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        throw new Error(
+          `Xiaohongshu API 搜索失败: ${error.response?.status} ${error.response?.data?.message || error.message}`
+        );
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * 获取 Xiaohongshu 笔记评论
+   */
+  async getXiaohongshuNoteComments(
+    noteId: string,
+    lastCursor?: string
+  ): Promise<any> {
+    this.requestCount++;
+    this.commentRequests++;
+
+    const queryParams: any = {
+      note_id: noteId
+    };
+
+    if (lastCursor) {
+      queryParams.lastCursor = lastCursor;
+    }
+
+    try {
+      const response = await this.client.get(
+        '/api/v1/xiaohongshu/web/get_note_comments',
+        { params: queryParams }
+      );
+
+      const data = response.data;
+
+      console.log('[Xiaohongshu API] 评论响应详情:', {
+        code: data.code,
+        message: data.message,
+        commentCount: data.data?.comments?.length || 0,
+        hasMore: data.data?.has_more,
+        cacheUrl: data.cache_url
+      });
+
+      // 存储缓存
+      if (data.cache_url) {
+        const cacheKey = `xiaohongshu_comments_${noteId}_${lastCursor || 'first'}`;
+        this.setCache(cacheKey, data, data.cache_url);
+      }
+
+      // 更新成本预估
+      this.costEstimate += this.COST_PER_REQUEST;
+
+      return data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        throw new Error(
+          `Xiaohongshu API 评论获取失败: ${error.response?.status} ${error.response?.data?.message || error.message}`
+        );
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * 批量获取 Xiaohongshu 笔记评论
+   */
+  async getXiaohongshuNoteCommentsBatch(
+    noteIds: string[],
+    maxCommentsPerNote: number
+  ): Promise<Map<string, any[]>> {
+    const result = new Map<string, any[]>();
+
+    for (const noteId of noteIds) {
+      try {
+        const comments: any[] = [];
+        let lastCursor = '';
+        let hasMore = true;
+
+        while (hasMore && comments.length < maxCommentsPerNote) {
+          const response = await this.getXiaohongshuNoteComments(
+            noteId,
+            lastCursor
+          );
+
+          if (response.code !== 200 || !response.data?.comments) {
+            console.warn('[Xiaohongshu API] 评论响应格式不符合预期，停止获取评论');
+            break;
+          }
+
+          const commentList = response.data.comments;
+          comments.push(...commentList);
+
+          // 检查是否还有更多评论
+          hasMore = response.data?.has_more === true;
+          lastCursor = response.data?.cursor || '';
+
+          console.log(`[Xiaohongshu API] 已获取 ${comments.length} 条评论，has_more: ${hasMore}`);
+
+          // 避免请求过快
+          await this.delay(300);
+        }
+
+        result.set(noteId, comments);
+      } catch (error) {
+        console.error(`[Xiaohongshu API] Failed to fetch comments for ${noteId}:`, error);
+        result.set(noteId, []);
+      }
+    }
+
+    return result;
+  }
 }
 
 /**

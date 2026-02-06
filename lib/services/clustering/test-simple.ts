@@ -133,7 +133,7 @@ function testDBSCAN() {
 // 主函数
 async function main() {
   console.log('\n╔════════════════════════════════════════════════╗');
-  console.log('║   DeepPoint AI - 语义聚类服务快速测试           ║');
+  console.log('║   SeekMoney AI - 语义聚类服务快速测试           ║');
   console.log('╚════════════════════════════════════════════════╝');
 
   const results = [
