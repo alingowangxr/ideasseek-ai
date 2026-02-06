@@ -159,7 +159,7 @@ interface CommentsResponse {
 
 **认证方式：**
 ```http
-Authorization: Bearer vZdfXsQag0amkXarPbOZ8S3nNTqVRrVysjLT4kjaa6yL0gTnBk/aTAi8aA==
+Authorization: Bearer vZdfXsQag0amkXarPbOZ8S3nNT6yL0gTnBk/aTAi8aA==
 ```
 
 **计费说明：**
@@ -533,7 +533,7 @@ export class TikHubService implements IDataSourceService {
   private client: TikHubAPIClient;
 
   constructor() {
-    const apiToken = process.env.TIKHUB_API_TOKEN || 'vZdfXsQag0amkXarPbOZ8S3nNTqVRrVysjLT4kjaa6yL0gTnBk/aTAi8aA==';
+    const apiToken = process.env.TIKHUB_API_TOKEN || 'vZdfXsQag0amkXarysjLT4kjaa6yL0gTnBk/aTAi8aA==';
     this.client = new TikHubAPIClient({ apiToken });
   }
 

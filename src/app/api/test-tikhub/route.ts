@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import axios from 'axios';
 
 export async function GET() {
-  const token = process.env.TIKHUB_API_TOKEN || 'vZdfXsQag0amkXarPbOZ8S3nNTqVRrVysjLT4kjaa6yL0gTnBk/aTAi8aA==';
+  const token = process.env.TIKHUB_API_TOKEN || 'vZdfXsQag0amkXarPysjLT4kjaa6yL0gTnBk/aTAi8aA==';
 
   console.log('[Test API] 开始测试 TikHub API');
   console.log('[Test API] Token:', token.substring(0, 20) + '...');
