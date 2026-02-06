@@ -6,21 +6,47 @@ English | [中文](./README.md)
 
 A web application that helps indie developers automatically discover user pain points from social media, with intelligent clustering analysis and AI-powered product solution generation.
 
+**Core Features:**
+- Multi-platform data collection (Douyin, Xiaohongshu, TikTok, Bilibili, WeChat Channels, YouTube)
+- Semantic clustering based on GLM embedding-3 + DBSCAN algorithm
+- Deep analysis using GLM-4.6 thinking model
+- Intelligent priority scoring system (demand intensity + market size + competition)
+- Full bilingual support (Chinese/English)
+
 ## Features
 
 ### Pain Point Analysis Module
-- Automatic crawling of Douyin (TikTok China) videos and comments by keywords
-- Semantic clustering algorithm based on embedding + DBSCAN
-- Deep analysis using GLM-4.6 thinking model
-- **In-depth Analysis Dimensions**:
+- **Multi-Platform Data Collection**
+  - Douyin (TikTok China)
+  - TikTok (International)
+  - Bilibili
+  - WeChat Channels
+  - YouTube
+  - Xiaohongshu (Little Red Book)
+- **Intelligent Semantic Clustering**
+  - Videos and comments clustered separately to avoid semantic confusion
+  - Vector representation based on GLM embedding-3
+  - DBSCAN density clustering for automatic topic discovery
+  - Supports multiple embedding providers (GLM, OpenAI)
+- **Deep AI Analysis** (GLM-4.6 Thinking Model)
   - Pain Depth: Surface pain → Root causes → User scenarios → Emotional intensity
   - Market Landscape: Existing solutions → Unmet needs → Opportunity analysis
   - MVP Plan: Core features → Validation hypotheses → First users → Cost estimation
-- **Priority Scoring System**: Comprehensive evaluation of demand intensity + market size + competition
-- **Data Quality Grading**: exploratory (<50) / preliminary (50-200) / reliable (≥200)
-- Visual table display of analysis results
-- One-click CSV export
-- **Raw Data Export**: Export crawler raw data and clustered group data
+  - Market size score (0-5)
+- **Priority Scoring System**
+  - Demand intensity: Based on cluster size and discussion热度
+  - Market size: AI-evaluated market potential
+  - Competition: Existing solution analysis
+  - Automatic sorting by综合得分
+- **Data Quality Grading**
+  - exploratory (<50): Exploratory,建议进一步验证
+  - preliminary (50-200): Preliminary conclusions, suitable for initial research
+  - reliable (≥200): High confidence, statistically significant
+- **Result Display & Export**
+  - Visual table display with sorting and filtering
+  - Click to view detailed source content and representative items
+  - One-click CSV export
+  - Raw data export (with cluster groups)
 
 ### AI Product Suggestion Module
 - AI product manager role auto-generates product solutions
@@ -35,12 +61,23 @@ A web application that helps indie developers automatically discover user pain p
 
 ## Data Sources
 
-| Source | Status | Description |
-|--------|--------|-------------|
-| TikHub API | **Recommended** | Stable data acquisition service based on TikHub API, no login required, pay per use |
-| Douyin - New | Available | Based on Playwright + CDP, better anti-detection, requires QR code login on first use |
-| Douyin - Legacy | Available | Based on DrissionPage browser automation, supports video search and comment collection |
-| Xiaohongshu | Paused | Testing found it causes account bans, not recommended |
+All data sources are powered by TikHub API, providing unified and stable data collection.
+
+| Source | Platform | Description |
+|--------|----------|-------------|
+| Douyin | Douyin | Chinese version of TikTok, largest short video platform |
+| TikTok | TikTok | International version, global users |
+| Bilibili | Bilibili | Leading video sharing platform in China |
+| WeChat Channels | WeChat | Short video feature within WeChat |
+| YouTube | YouTube | World's largest video platform |
+| Xiaohongshu | Xiaohongshu | Lifestyle sharing community |
+
+### TikHub API Advantages
+- **Multi-Platform**: One API for 6 major platforms
+- **Stable & Reliable**: No crawler maintenance, avoids anti-crawling restrictions
+- **Pay Per Use**: ~¥0.01/request, 24-hour cache reduces costs
+- **Developer Friendly**: RESTful API with comprehensive documentation and SDKs
+- **Compliance**: Official API interface, avoids legal risks
 
 ## Preview
 
@@ -57,7 +94,6 @@ A web application that helps indie developers automatically discover user pain p
 - Node.js >= 18
 - Python >= 3.10
 - npm or pnpm
-- Google Chrome
 
 ### 1. Install Dependencies
 
@@ -71,12 +107,6 @@ npm install
 
 # Install Python dependencies
 pip install -r requirements.txt
-
-# If using the new Douyin data source, also install the browser
-playwright install chromium
-
-# Or manually install core dependencies
-pip install DrissionPage beautifulsoup4 lxml scikit-learn numpy python-dotenv
 ```
 
 ### 2. Configure Environment Variables
@@ -94,16 +124,13 @@ GLM_API_KEY=your_glm_api_key_here
 GLM_MODEL_NAME=glm-4.6
 GLM_EMBEDDING_MODEL=embedding-3
 
-# TikHub API Configuration (Recommended)
+# TikHub API Configuration (Required)
 # Register at: https://api.tikhub.io/
 TIKHUB_API_TOKEN=your_tikhub_api_token_here
 # Use China domain (optional)
 TIKHUB_USE_CHINA_DOMAIN=false
 # Enable cache (24-hour cache reduces costs)
 TIKHUB_ENABLE_CACHE=true
-
-# Browser Configuration (set to true for server environments)
-HEADLESS=false
 ```
 
 ### 3. Run the Project
@@ -123,15 +150,13 @@ Visit http://localhost:3000
 
 ### Pain Point Analysis (Home Page)
 
-1. Select data source (TikHub API recommended)
+1. Select data source (Douyin, TikTok, Bilibili, WeChat Channels, YouTube, Xiaohongshu)
 2. Enter keywords, separated by commas, e.g., `camping, beginner, gear`
 3. Optionally enable video comment fetching (slower but richer data)
 4. Click Start Analysis and wait for results
 5. Click any row to view detailed source content, or export CSV
 
 > **TikHub API Note**: Based on TikHub API data acquisition service, no login required, pay per use. Each analysis costs approximately ¥0.01-0.5, depending on data volume.
->
-> **New Douyin Note**: On first use, a browser window will pop up requiring QR code login to Douyin. Login state is automatically saved for future use.
 
 ### AI Product Suggestions (/ai-product)
 
@@ -221,59 +246,139 @@ SeekMoney-ai/
 | Internationalization | next-intl |
 | Data Fetching | SWR (job status polling) |
 | Backend | Next.js API Routes |
-| Data Collection | TikHub API / Python + DrissionPage / Playwright |
+| Data Collection | TikHub API |
 | AI Analysis | Zhipu GLM-4.6 (thinking model) + embedding-3 |
-| Clustering Algorithm | Embedding + DBSCAN semantic clustering |
+| Clustering Algorithm | GLM embedding-3 + DBSCAN / TypeScript native clustering |
+| Task Queue | In-memory job management (supports async processing) |
+
+## Core Architecture
+
+### Task Processing Flow
+
+```
+User Input (keywords + data source)
+    ↓
+DataSourceFactory → Crawler Service
+    ↓
+Raw Video Data + Comment Data
+    ↓
+Separate Clustering (videos vs comments to avoid semantic confusion)
+    ↓
+Python/TS Clustering Service
+  - Data Cleaning: Noise filtering, quality scoring
+  - Vectorization: GLM embedding-3
+  - Clustering: DBSCAN + cosine distance
+    ↓
+Cluster Results (with representative texts)
+    ↓
+GLM-4.6 Deep Analysis (per cluster)
+  - Pain Depth (surface → root causes → scenarios)
+  - Market Landscape (existing solutions → unmet needs)
+  - MVP Plan (features → validation → timeline)
+  - Market Size Score (0-5)
+    ↓
+Priority Scoring (demand + market + competition)
+    ↓
+Sorted Results → Frontend Display
+```
+
+### Design Patterns
+
+- **Factory Pattern**: `DataSourceFactory` abstracts data sources, supports dynamic switching
+- **Service Layer Pattern**: Clear business logic layering
+- **Job Queue**: Asynchronous processing with status polling support
+- **Adapter Pattern**: Unified interface for different platform APIs
 
 ## API Configuration
 
 ### TikHub API (Recommended)
 
-1. Register at: https://api.tikhub.io/
-2. Get API Token
-3. Configure in `TIKHUB_API_TOKEN` environment variable
-4. Pay per request, approximately ¥0.01/request
+**Sign Up**: https://api.tikhub.io/
 
-### Zhipu AI (Required)
+**Features**:
+- Multi-platform support: Douyin, Xiaohongshu, TikTok, Bilibili, WeChat Channels, YouTube
+- Stable & reliable: API interface, no anti-crawling risks
+- Pay per use: ~¥0.01/request
+- 24-hour cache: Free repeat requests
+- Usage monitoring: Supports `getUsageStats()` method
 
-1. Register at: https://open.bigmodel.cn/
-2. Create an API Key
-3. Configure in `GLM_API_KEY` environment variable
+**Configuration Example**:
+```env
+TIKHUB_API_TOKEN=your_tikhub_api_token_here
+TIKHUB_USE_CHINA_DOMAIN=false  # Use China domain
+TIKHUB_ENABLE_CACHE=true       # Enable 24-hour cache
+```
+
+### Zhipu AI GLM (Required)
+
+**Sign Up**: https://open.bigmodel.cn/
+
+**Model Description**:
+- `glm-4.6`: Latest thinking model with deep reasoning capabilities
+- `embedding-3`: Semantic vector model for clustering
+
+**Configuration Example**:
+```env
+GLM_API_KEY=your_glm_api_key_here
+GLM_MODEL_NAME=glm-4.6
+GLM_EMBEDDING_MODEL=embedding-3
+```
 
 ## FAQ
 
 ### Q: How much does TikHub API cost?
 A: TikHub API charges per request, approximately ¥0.01/request. A typical analysis (3 keywords, 20 videos, 30 comments per video) costs about ¥0.5. Supports 24-hour caching, repeat access is free.
 
-### Q: Why is Douyin data collection slow?
-A: If using browser automation crawler, slower speed is normal. It's recommended to use TikHub API for faster and more stable performance.
+### Q: Why is TikHub API recommended?
+A:
+- **Stability**: API interface, no anti-crawling risks
+- **Multi-platform**: One API for 6 major platforms
+- **Speed**: Fast response, no page loading wait
+- **Cost**: Pay per use, ~¥0.01/request
+- **Compliance**: Official API interface, avoids legal risks
+- **Cache**: 24-hour cache, free repeat requests
 
 ### Q: How to deploy on a server?
-A: Set `HEADLESS=true` environment variable to enable headless browser mode. Using TikHub API doesn't require this configuration.
+A:
+1. Ensure TikHub API Token and GLM API Key are configured
+2. Ensure Node.js and Python environments are installed
+3. Run `npm run build && npm start`
 
-### Q: Too few clustering results?
-A: Try more keywords, or adjust the `minClusterSize` parameter in `clustering-service.ts`.
+### Q: Too few or too many clustering results?
+A:
+- **Too few**: Try more keywords, or lower the `minClusterSize` parameter
+- **Too many**: Increase keyword specificity, or raise the `eps` parameter (clustering distance threshold)
 
-### Q: Can I use Xiaohongshu?
-A: Not recommended. Testing found it causes account bans.
+### Q: Which platforms are supported?
+A: Currently supports 6 platforms: Douyin, TikTok, Bilibili, WeChat Channels, YouTube, Xiaohongshu. All data sources are powered by TikHub API.
+
+### Q: What does data quality grading mean?
+A:
+- **exploratory (<50)**: Small sample size,建议进一步验证
+- **preliminary (50-200)**: Medium confidence, suitable for initial research
+- **reliable (≥200)**: High confidence, statistically significant
 
 ## Roadmap
 
-- [x] TikHub API data source support
-- [x] Douyin data source support
+### Completed
+- [x] TikHub API data source support (6 platforms)
 - [x] Pain point clustering analysis
 - [x] AI product solution generation
 - [x] Deep crawling (with comments)
 - [x] Multi-language support (Chinese/English)
-- [ ] More data sources (Zhihu, Weibo)
-- [ ] History record saving
+- [x] Data quality grading
+- [x] Priority scoring system
+- [x] Raw data export
+
+### Planned
+- [ ] User history record saving
+- [ ] More data sources (Zhihu, Weibo, Instagram)
+- [ ] Trend analysis features
+- [ ] Competitor analysis module
+- [ ] Database persistence
+- [ ] User authentication system
+- [ ] Team collaboration features
 
 ## License
 
 This project is licensed under the MIT License.
-
-**Note**: The crawler code under `lib/crawlers/douyin_new/` is based on the MediaCrawler project, licensed under NON-COMMERCIAL LEARNING LICENSE 1.1, for non-commercial learning and research purposes only.
-
-## Acknowledgments
-
-- New Douyin crawler based on [MediaCrawler](https://github.com/NanmiCoder/MediaCrawler) (NON-COMMERCIAL LEARNING LICENSE 1.1, for learning and research only)

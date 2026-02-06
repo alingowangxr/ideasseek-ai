@@ -708,10 +708,10 @@ export class TikHubAPIClient {
           comments.push(...commentList);
 
           // 检查是否还有更多评论
-          has_more = response.data.has_more === 1 || response.data.has_more === true;
+          hasMore = response.data.has_more === 1 || response.data.has_more === true;
           cursor = response.data.cursor || 0;
 
-          console.log(`[TikTok API] 已获取 ${comments.length} 条评论，has_more: ${has_more}, cursor: ${cursor}`);
+          console.log(`[TikTok API] 已获取 ${comments.length} 条评论，hasMore: ${hasMore}, cursor: ${cursor}`);
 
           // 避免请求过快
           await this.delay(300);
@@ -1144,7 +1144,7 @@ export class TikHubAPIClient {
     continuationToken?: string
   ): Promise<any> {
     this.requestCount++;
-    this.commentRequests++;
+    this.commentsRequests++;
 
     const queryParams: any = {
       video_id: videoId,
@@ -1311,7 +1311,7 @@ export class TikHubAPIClient {
     lastCursor?: string
   ): Promise<any> {
     this.requestCount++;
-    this.commentRequests++;
+    this.commentsRequests++;
 
     const queryParams: any = {
       note_id: noteId

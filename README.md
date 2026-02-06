@@ -6,21 +6,47 @@
 
 一个帮助个人开发者从社交媒体自动发现用户核心痛点的 Web 应用，支持智能聚类分析和 AI 产品方案生成。
 
+**核心功能：**
+- 多平台数据采集（抖音、小红书、TikTok、Bilibili、微信视频号、YouTube）
+- 基于 GLM embedding-3 + DBSCAN 的语义聚类算法
+- 调用 GLM-4.6 思考模型深度分析用户痛点
+- 智能优先级评分系统（需求强度 + 市场规模 + 竞争度）
+- 完整的中英文双语支持
+
 ## 功能特性
 
 ### 痛点分析模块
-- 输入关键词自动抓取抖音相关视频和评论
-- 基于 embedding + DBSCAN 的语义聚类算法
-- 调用 GLM-4.6 思考模型深度分析用户痛点
-- **深度分析维度**：
+- **多平台数据采集**
+  - 抖音
+  - TikTok（国际版）
+  - Bilibili（B站）
+  - 微信视频号
+  - YouTube
+  - 小红书
+- **智能语义聚类**
+  - 视频/评论分别聚类，避免语义层次混淆
+  - 基于 GLM embedding-3 的向量表示
+  - DBSCAN 密度聚类算法，自动发现主题
+  - 支持多种 embedding 提供商（GLM、OpenAI）
+- **深度 AI 分析**（GLM-4.6 思考模型）
   - 痛点深度：表面痛点 → 根本原因 → 用户场景 → 情感强度
   - 市场格局：现有方案 → 未满足需求 → 机会分析
-  - MVP计划：核心功能 → 验证假设 → 首批用户 → 成本估算
-- **优先级评分系统**：需求强度 + 市场规模 + 竞争度综合评估
-- **数据质量分级**：exploratory（<50条）/ preliminary（50-200条）/ reliable（≥200条）
-- 可视化表格展示分析结果
-- 一键导出 CSV 格式报告
-- **原始数据导出**：支持导出爬虫原始数据和聚类后分组数据
+  - MVP 计划：核心功能 → 验证假设 → 首批用户 → 成本估算
+  - 市场规模评分（0-5 分）
+- **优先级评分系统**
+  - 需求强度：基于聚类规模和讨论热度
+  - 市场规模：AI 评估的市场潜力
+  - 竞争度：现有解决方案分析
+  - 综合得分自动排序
+- **数据质量分级**
+  - exploratory（<50 条）：探索性，建议进一步验证
+  - preliminary（50-200 条）：初步结论，适合初期研究
+  - reliable（≥200 条）：高置信度，统计显著
+- **结果展示与导出**
+  - 可视化表格展示，支持排序和筛选
+  - 点击查看详细原文和代表性内容
+  - 一键导出 CSV 格式报告
+  - 原始数据导出（含聚类分组）
 
 ### AI 产品建议模块
 - AI 产品经理角色自动生成产品方案
@@ -35,48 +61,55 @@
 
 ## 数据源说明
 
-| 数据源 | 状态 | 说明 |
+所有数据源均基于 TikHub API，提供统一、稳定的数据采集服务。
+
+| 数据源 | 平台 | 说明 |
 |--------|------|------|
-| TikHub API | **推荐** | 基于 TikHub API 的稳定数据获取服务，无需登录，按需付费 |
-| 抖音 - 新版 | 可用 | 基于 Playwright + CDP，反检测能力更强，首次需扫码登录 |
-| 抖音 - 旧版 | 可用 | 基于 DrissionPage 浏览器自动化，支持视频搜索和评论采集 |
-| 小红书 | 暂停 | 测试发现会导致账号被封，暂不建议使用 |
+| 抖音 | Douyin | 中国版抖音，最大的短视频平台 |
+| TikTok | TikTok | 国际版抖音，全球用户 |
+| Bilibili | Bilibili | 中国领先的视频分享平台 |
+| 微信视频号 | WeChat | 微信内置短视频功能 |
+| YouTube | YouTube | 全球最大视频平台 |
+| 小红书 | Xiaohongshu | 生活方式分享社区 |
+
+### TikHub API 优势
+- **多平台统一**：一个 API 接入 6 个主流平台
+- **稳定可靠**：无需维护爬虫，避免反爬限制
+- **按需付费**：约 ¥0.01/次请求，24 小时缓存降低成本
+- **开发友好**：RESTful API，完善的文档和 SDK
+- **合规安全**：官方 API 接口，避免法律风险
 
 ## 运行预览
 
 > 更多界面截图与资源文件，请浏览 [ assets 文件夹](./assets/)。
 
-<img src="./assets/demo-preview-result.png" alt="image-20251223210939459" style="zoom: 63%;" />
+<img src="./assets/图片1.png" alt="image-20251223210939459" style="zoom: 63%;" />
 
-<img src="./assets/demo-preview-result1.png" alt="image-20251223210939459" style="zoom: 63%;" />
+<img src="./assets/图片2.png" alt="image-20251223210939459" style="zoom: 63%;" />
+<img src="./assets/图片3.png" alt="image-20251223210939459" style="zoom: 63%;" />
+<img src="./assets/图片4.png" alt="image-20251223210939459" style="zoom: 63%;" />
+<img src="./assets/图片5.png" alt="image-20251223210939459" style="zoom: 63%;" />
+<img src="./assets/图片6.png" alt="image-20251223210939459" style="zoom: 63%;" />
+<img src="./assets/图片7.png" alt="image-20251223210939459" style="zoom: 63%;" />
+
 
 ## 快速开始
 
 ### 环境要求
 
-- Node.js >= 18
-- Python >= 3.10
+- Node.js >= 18 
 - npm 或 pnpm
-- Google Chrome
 
 ### 1. 安装依赖
 
 ```bash
 # 克隆项目
-git clone https://github.com/weiyf2/SeekMoney-ai.git
+git clone https://github.com/liangdabiao/SeekMoney-ai.git
 cd SeekMoney-ai
 
 # 安装 Node.js 依赖
 npm install
-
-# 安装 Python 依赖
-pip install -r requirements.txt
-
-# 如果使用新版抖音数据源，还需安装浏览器
-playwright install chromium
-
-# 或手动安装核心依赖
-pip install DrissionPage beautifulsoup4 lxml scikit-learn numpy python-dotenv
+ 
 ```
 
 ### 2. 配置环境变量
@@ -94,16 +127,13 @@ GLM_API_KEY=your_glm_api_key_here
 GLM_MODEL_NAME=glm-4.6
 GLM_EMBEDDING_MODEL=embedding-3
 
-# TikHub API 配置 (推荐使用)
+# TikHub API 配置 (必需)
 # 注册地址: https://api.tikhub.io/
 TIKHUB_API_TOKEN=your_tikhub_api_token_here
 # 使用中国域名（可选）
 TIKHUB_USE_CHINA_DOMAIN=false
 # 是否启用缓存（24小时缓存可降低成本）
 TIKHUB_ENABLE_CACHE=true
-
-# 浏览器配置 (服务器环境设为 true)
-HEADLESS=false
 ```
 
 ### 3. 运行项目
@@ -123,15 +153,13 @@ npm run start
 
 ### 痛点分析（主页）
 
-1. 选择数据源（推荐使用 TikHub API）
+1. 选择数据源（抖音、TikTok、Bilibili、微信视频号、YouTube、小红书）
 2. 输入关键词，多个用逗号分隔，如：`露营, 新手, 装备`
 3. 可选开启获取视频评论（更耗时但数据更丰富）
 4. 点击开始分析，等待结果
 5. 点击任意行查看详细原文，或导出 CSV
 
 > **TikHub API 说明**：基于 TikHub API 的数据获取服务，无需登录，按需付费。每次分析约 ¥0.01-0.5，具体取决于数据量。
->
-> **新版抖音说明**：首次使用时会弹出浏览器窗口，需要扫码登录抖音。登录状态会自动保存，后续无需重复登录。
 
 ### AI 产品建议（/ai-product）
 
@@ -219,61 +247,141 @@ SeekMoney-ai/
 | 前端框架 | Next.js 15 + React 19 |
 | 样式 | Tailwind CSS 4 |
 | 国际化 | next-intl |
-| 数据请求 | SWR (轮询任务状态) |
+| 数据请求 | SWR (任务状态轮询) |
 | 后端 | Next.js API Routes |
-| 数据采集 | TikHub API / Python + DrissionPage / Playwright |
+| 数据采集 | TikHub API |
 | AI 分析 | 智谱 GLM-4.6（思考模型）+ embedding-3 |
-| 聚类算法 | 基于 embedding + DBSCAN 语义聚类 |
+| 聚类算法 | GLM embedding-3 + DBSCAN / TypeScript 原生聚类 |
+| 任务队列 | 内存任务管理（支持异步处理） |
+
+## 核心架构
+
+### 任务处理流程
+
+```
+用户输入（关键词 + 数据源）
+    ↓
+DataSourceFactory → 爬虫服务
+    ↓
+原始视频数据 + 评论数据
+    ↓
+分别聚类（视频 vs 评论，避免语义混淆）
+    ↓
+Python/TS 聚类服务
+  - 数据清洗：噪音过滤、质量评分
+  - 向量化：GLM embedding-3
+  - 聚类：DBSCAN + 余弦距离
+    ↓
+聚类结果（含代表性文本）
+    ↓
+GLM-4.6 深度分析（每类）
+  - 痛点深度（表面 → 根因 → 场景）
+  - 市场格局（现有方案 → 未满足需求）
+  - MVP 计划（功能 → 验证 → 时间线）
+  - 市场规模评分（0-5）
+    ↓
+优先级评分（需求 + 市场 + 竞争）
+    ↓
+排序结果 → 前端展示
+```
+
+### 设计模式
+
+- **工厂模式**：`DataSourceFactory` 抽象数据源，支持动态切换
+- **服务层模式**：清晰的业务逻辑分层
+- **任务队列**：异步处理，支持状态轮询
+- **适配器模式**：统一不同平台 API 的接口
 
 ## API 配置
 
-### TikHub API (推荐)
+### TikHub API（推荐使用）
 
-1. 注册账号：https://api.tikhub.io/
-2. 获取 API Token
-3. 配置到 `TIKHUB_API_TOKEN` 环境变量
-4. 按请求计费，约 ¥0.01/次
+**注册地址**：https://api.tikhub.io/
 
-### 智谱 AI (必需)
+**特点**：
+- 支持多平台：抖音、小红书、TikTok、Bilibili、微信视频号、YouTube
+- 稳定可靠：API 接口，无反爬风险
+- 按需付费：约 ¥0.01/次请求
+- 24 小时缓存：重复请求免费
+- 用量监控：支持 `getUsageStats()` 方法查询
 
-1. 注册账号：https://open.bigmodel.cn/
-2. 创建 API Key
-3. 配置到 `GLM_API_KEY` 环境变量
+**配置示例**：
+```env
+TIKHUB_API_TOKEN=your_tikhub_api_token_here
+TIKHUB_USE_CHINA_DOMAIN=false  # 是否使用中国域名
+TIKHUB_ENABLE_CACHE=true       # 启用 24 小时缓存
+```
+
+### 智谱 AI GLM（必需）
+
+**注册地址**：https://open.bigmodel.cn/
+
+**模型说明**：
+- `glm-4.6`：最新思考模型，支持深度推理
+- `embedding-3`：语义向量模型，用于聚类
+
+**配置示例**：
+```env
+GLM_API_KEY=your_glm_api_key_here
+GLM_MODEL_NAME=glm-4.6
+GLM_EMBEDDING_MODEL=embedding-3
+```
 
 ## 常见问题
 
 ### Q: TikHub API 如何收费？
-A: TikHub API 按请求计费，约 ¥0.01/次。一次典型分析（3个关键词，20个视频，每个视频30条评论）大约花费 ¥0.5。支持24小时缓存，重复访问不收费。
+A: TikHub API 按请求计费，约 ¥0.01/次。一次典型分析（3 个关键词，20 个视频，每个视频 30 条评论）大约花费 ¥0.5。支持 24 小时缓存，重复访问不收费。
 
-### Q: 抖音数据采集很慢？
-A: 如果使用浏览器自动化爬虫，速度较慢是正常的。建议使用 TikHub API，速度更快且更稳定。
+### Q: 为什么推荐使用 TikHub API？
+A:
+- **稳定性**：API 接口，无反爬风险
+- **多平台**：一个 API 支持 6 个主流平台
+- **速度**：快速响应，无需等待页面加载
+- **成本**：按需付费，约 ¥0.01/次请求
+- **合规**：官方 API 接口，避免法律风险
+- **缓存**：24 小时缓存，重复请求免费
 
 ### Q: 如何在服务器部署？
-A: 设置 `HEADLESS=true` 环境变量启用无头浏览器模式。使用 TikHub API 则无需此配置。
+A:
+1. 确保已配置 TikHub API Token 和 GLM API Key
+2. 确保 Node.js 和 Python 环境已安装
+3. 运行 `npm run build && npm start`
 
-### Q: 聚类结果太少？
-A: 可以尝试更多关键词，或调整 `clustering-service.ts` 中的 `minClusterSize` 参数。
+### Q: 聚类结果太少或太多？
+A:
+- **结果太少**：尝试更多关键词，或降低 `minClusterSize` 参数
+- **结果太多**：增加关键词精确度，或提高 `eps` 参数（聚类距离阈值）
 
-### Q: 小红书能用吗？
-A: 暂不建议使用，测试发现会导致账号被封禁。
+### Q: 支持哪些平台？
+A: 目前支持 6 个平台：抖音、TikTok、Bilibili、微信视频号、YouTube、小红书。所有数据源均基于 TikHub API。
+
+### Q: 数据质量分级是什么意思？
+A:
+- **exploratory（<50）**：样本量小，建议进一步验证
+- **preliminary（50-200）**：中等置信度，适合初期研究
+- **reliable（≥200）**：高置信度，统计显著
 
 ## 开发计划
 
-- [x] TikHub API 数据源支持
-- [x] 抖音数据源支持
+### 已完成
+- [x] TikHub API 数据源支持（6 个平台）
 - [x] 痛点聚类分析
 - [x] AI 产品方案生成
 - [x] 深度抓取（含评论）
 - [x] 多语言支持（中文/英文）
-- [ ] 更多数据源（知乎、微博）
-- [ ] 历史记录保存
+- [x] 数据质量分级
+- [x] 优先级评分系统
+- [x] 原始数据导出
+
+### 计划中
+- [ ] 用户历史记录保存
+- [ ] 更多数据源（知乎、微博、Instagram）
+- [ ] 趋势分析功能
+- [ ] 竞品分析模块
+- [ ] 数据库持久化
+- [ ] 用户认证系统
+- [ ] 团队协作功能
 
 ## 许可证
 
 本项目采用 MIT License。
-
-**注意**：`lib/crawlers/douyin_new/` 目录下的爬虫代码基于 MediaCrawler 项目，采用 NON-COMMERCIAL LEARNING LICENSE 1.1 许可，仅限非商业学习研究用途。
-
-## 致谢
-
-- 新版抖音爬虫基于 [MediaCrawler](https://github.com/NanmiCoder/MediaCrawler)（NON-COMMERCIAL LEARNING LICENSE 1.1，仅供学习研究使用）

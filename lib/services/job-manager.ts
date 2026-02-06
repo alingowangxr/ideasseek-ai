@@ -1127,10 +1127,13 @@ function getGlobalJobManager() {
             averageClusterSize
           };
 
-          // 步骤6: 完成任务
+          // 步骤6: 完成任务并保存数据
           job.results = results;
           job.status = 'completed';
           job.progress = '分析完成';
+
+          // 保存分析结果到文件系统
+          this.saveAnalysisResults(job, results, allVideos, allComments, allRawTexts, totalDataSize, clusterCount, averageClusterSize);
 
         } catch (error) {
           this.updateJobStatus(jobId, 'failed', '任务失败', error instanceof Error ? error.message : '未知错误');
