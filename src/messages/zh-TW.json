@@ -1,6 +1,6 @@
 {
-  "metadata": {
-    "title": "SeekMoney - Insight Intelligence",
+"metadata": {
+    "title": "IdeasSeek AI - Insight Intelligence",
     "description": "從社群媒體發現使用者痛點，找商機，智慧分析產品機會"
   },
   "nav": {
@@ -50,6 +50,13 @@
       "commentsPerVideo": "每影片評論數",
       "subComments": "二級評論",
       "subCommentsDesc": "擷取評論的回覆"
+    },
+    "tiktokConfig": {
+      "title": "TikTok API 配置",
+      "description": "國際版 TikTok 資料源，基於 TikHub API",
+      "statusAvailable": "API 服務可用",
+      "pricing": "按請求計費，約 $0.01/次",
+      "commentsNote": "取得評論資料可提高分析準確性"
     },
     "tikhubConfig": {
       "title": "TikHub API 配置",

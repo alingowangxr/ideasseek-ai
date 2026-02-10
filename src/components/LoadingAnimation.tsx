@@ -10,7 +10,7 @@ interface LoadingAnimationProps {
 
 type AnimationType = "data-stream" | "fluid" | "crystal" | "neural";
 
-// 根据进度文本判断当前阶段
+// 根据进度文本判断当前阶段 (using Chinese keywords from backend)
 function getAnimationType(progressText: string): AnimationType {
   if (
     progressText.includes("初始化") ||
@@ -31,21 +31,7 @@ function getAnimationType(progressText: string): AnimationType {
   return "data-stream";
 }
 
-// 获取阶段信息
-function getStageInfo(animationType: AnimationType): { title: string; badge: string; step: string } {
-  switch (animationType) {
-    case "data-stream":
-      return { title: "数据采集中", badge: "抓取内容", step: "Step 1/4" };
-    case "fluid":
-      return { title: "语义处理中", badge: "特征提取", step: "Step 2/4" };
-    case "crystal":
-      return { title: "智能聚类中", badge: "AI 运算", step: "Step 3/4" };
-    case "neural":
-      return { title: "深度分析中", badge: "LLM 推理", step: "Step 4/4" };
-  }
-}
-
-// 计算进度百分比
+// 计算进度百分比 (using Chinese keywords from backend)
 function getProgressPercent(progressText: string): number {
   if (progressText.includes("初始化")) return 5;
   if (progressText.includes("验证")) return 10;
@@ -64,31 +50,6 @@ function getProgressPercent(progressText: string): number {
     return 80;
   }
   return 10;
-}
-
-// 获取详细日志文本
-function getLogDetail(progressText: string): string {
-  if (progressText.includes("初始化")) return "正在准备分析环境...";
-  if (progressText.includes("验证")) return "正在验证数据源连接...";
-  if (progressText.includes("抓取")) {
-    const match = progressText.match(/"([^"]+)"/);
-    return match ? `正在抓取「${match[1]}」相关内容...` : "正在抓取相关内容...";
-  }
-  if (progressText.includes("语义聚类")) return "正在分析文本语义特征...";
-  if (progressText.includes("条视频")) {
-    const match = progressText.match(/(\d+)/);
-    return match ? `正在处理 ${match[1]} 条视频内容...` : "正在处理视频内容...";
-  }
-  if (progressText.includes("条评论")) {
-    const match = progressText.match(/(\d+)/);
-    return match ? `正在处理 ${match[1]} 条评论内容...` : "正在处理评论内容...";
-  }
-  if (progressText.includes("LLM")) return "AI 正在深度理解用户痛点...";
-  if (progressText.includes("分析聚类")) {
-    const match = progressText.match(/(\d+)\/(\d+)/);
-    return match ? `正在分析第 ${match[1]} 个痛点聚类...` : "正在分析痛点聚类...";
-  }
-  return "正在处理中...";
 }
 
 export default function LoadingAnimation({ progressText, status }: LoadingAnimationProps) {

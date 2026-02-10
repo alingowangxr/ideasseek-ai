@@ -1,6 +1,6 @@
 {
-  "metadata": {
-    "title": "SeekMoney - Insight Intelligence",
+"metadata": {
+    "title": "IdeasSeek AI - Insight Intelligence",
     "description": "Discover user pain points from social media, intelligent product opportunity analysis"
   },
   "nav": {
@@ -50,6 +50,13 @@
       "commentsPerVideo": "Comments per Video",
       "subComments": "Sub Comments",
       "subCommentsDesc": "Crawl comment replies"
+    },
+    "tiktokConfig": {
+      "title": "TikTok API Config",
+      "description": "International TikTok data source via TikHub API",
+      "statusAvailable": "API Service Available",
+      "pricing": "Pay per request, ~$0.01/request",
+      "commentsNote": "Including comment data improves analysis accuracy"
     },
     "tikhubConfig": {
       "title": "TikHub API Config",

@@ -318,6 +318,7 @@ export class ZhipuAIEmbeddingProvider implements IEmbeddingProvider {
 
     const startTime = Date.now();
     const embeddings: number[][] = [];
+    const TIMEOUT_MS = 30000; // 30秒超时
 
     try {
       console.log(`[ZhipuAI Embedding] Processing ${texts.length} texts (1 by 1 due to API limit)`);
@@ -328,26 +329,41 @@ export class ZhipuAIEmbeddingProvider implements IEmbeddingProvider {
 
         console.log(`[ZhipuAI Embedding] Processing ${i + 1}/${texts.length}`);
 
-        const response = await fetch(this.baseURL, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${this.apiKey}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            model: this.model,
-            input: text
-          })
-        });
+        // 创建 AbortController 用于超时控制
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`ZhipuAI API error: ${response.status} - ${errorText}`);
+        try {
+          const response = await fetch(this.baseURL, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${this.apiKey}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              model: this.model,
+              input: text
+            }),
+            signal: controller.signal
+          });
+
+          clearTimeout(timeoutId);
+
+          if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`ZhipuAI API error: ${response.status} - ${errorText}`);
+          }
+
+          const result = await response.json();
+          const embedding = result.data[0].embedding;
+          embeddings.push(embedding);
+        } catch (error: any) {
+          clearTimeout(timeoutId);
+          if (error.name === 'AbortError') {
+            throw new Error(`ZhipuAI API timeout after ${TIMEOUT_MS}ms`);
+          }
+          throw error;
         }
-
-        const result = await response.json();
-        const embedding = result.data[0].embedding;
-        embeddings.push(embedding);
 
         // 更新统计
         this.stats.requestCount++;
@@ -377,6 +393,9 @@ export class ZhipuAIEmbeddingProvider implements IEmbeddingProvider {
   }
 
   async checkAvailability(): Promise<boolean> {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10秒超时
+
     try {
       const response = await fetch(this.baseURL, {
         method: 'POST',
@@ -387,10 +406,13 @@ export class ZhipuAIEmbeddingProvider implements IEmbeddingProvider {
         body: JSON.stringify({
           model: this.model,
           input: 'test'
-        })
+        }),
+        signal: controller.signal
       });
+      clearTimeout(timeoutId);
       return response.ok;
     } catch {
+      clearTimeout(timeoutId);
       return false;
     }
   }

@@ -90,14 +90,14 @@ export default function AnalysisForm({ onSubmit, isLoading }: AnalysisFormProps)
             disabled={isLoading}
             className="w-full bg-[#FBFBF9] text-[#18181B] font-medium py-3 px-4 rounded-xl appearance-none border border-transparent focus:border-[#18181B] focus:bg-white focus:ring-0 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <option value="tiktok">🌟 TikTok</option>
-            <option value="tikhub">▶️ 抖音</option>
-            <option value="bilibili">📺 Bilibili</option>
-            <option value="wechat">💬 微信视频号</option>
-            <option value="youtube">▶️ YouTube</option>
-            <option value="xiaohongshu">📕 小红书</option>
-            <option value="twitter">🐦 X (Twitter)</option>
-            <option value="reddit">🤖 Reddit</option>
+            <option value="tiktok">🌟 {t('dataSource.tiktok')}</option>
+            <option value="tikhub">▶️ {t('dataSource.tikhub')}</option>
+            <option value="bilibili">📺 {t('dataSource.bilibili')}</option>
+            <option value="wechat">💬 {t('dataSource.wechat')}</option>
+            <option value="youtube">▶️ {t('dataSource.youtube')}</option>
+            <option value="xiaohongshu">📕 {t('dataSource.xiaohongshu')}</option>
+            <option value="twitter">🐦 {t('dataSource.twitter')}</option>
+            <option value="reddit">🤖 {t('dataSource.reddit')}</option>
           </select>
           <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-500">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -228,7 +228,7 @@ export default function AnalysisForm({ onSubmit, isLoading }: AnalysisFormProps)
               <div className="text-xs text-gray-600">
                 <span className="font-medium">{t('tikhubConfig.costEstimate')}:</span>
                 <span className="ml-2 font-mono text-blue-600">
-                  ~¥{((tiktokConfig.maxVideos / 20 * 0.01 + (tiktokConfig.enableComments ? tiktokConfig.maxVideos * (tiktokConfig.maxCommentsPerVideo / 20) * 0.01 : 0)).toFixed(2))}
+                  ~${((tiktokConfig.maxVideos / 20 * 0.01 + (tiktokConfig.enableComments ? tiktokConfig.maxVideos * (tiktokConfig.maxCommentsPerVideo / 20) * 0.01 : 0)).toFixed(2))}
                 </span>
                 <span className="text-gray-400 ml-1">{t('tikhubConfig.perAnalysis')}</span>
               </div>
@@ -247,16 +247,16 @@ export default function AnalysisForm({ onSubmit, isLoading }: AnalysisFormProps)
               </svg>
             </div>
             <div className="flex-1">
-              <div className="text-sm font-bold text-[#18181B] mb-1">TikTok API 配置</div>
-              <div className="text-xs text-gray-600 mb-3">国际版 TikTok 数据源，基于 TikHub API</div>
+              <div className="text-sm font-bold text-[#18181B] mb-1">{t('tiktokConfig.title')}</div>
+              <div className="text-xs text-gray-600 mb-3">{t('tiktokConfig.description')}</div>
 
               {/* API 状态指示 */}
               <div className="flex items-center gap-2 text-xs">
                 <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full">
                   <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
-                  API 服务可用
+                  {t('tiktokConfig.statusAvailable')}
                 </span>
-                <span className="text-gray-500">按请求计费，约 ¥0.01/次</span>
+                <span className="text-gray-500">{t('tiktokConfig.pricing')}</span>
               </div>
             </div>
           </div>
@@ -266,7 +266,7 @@ export default function AnalysisForm({ onSubmit, isLoading }: AnalysisFormProps)
             <label className="flex items-center justify-between group cursor-pointer">
               <div className="pointer-events-none">
                 <span className="block text-sm font-medium text-[#18181B]">{t('douyinNewConfig.enableComments')}</span>
-                <span className="text-xs text-gray-500">获取评论数据可提高分析准确性</span>
+                <span className="text-xs text-gray-500">{t('tiktokConfig.commentsNote')}</span>
               </div>
               <div className="relative inline-flex items-center">
                 <input
@@ -342,7 +342,7 @@ export default function AnalysisForm({ onSubmit, isLoading }: AnalysisFormProps)
               <div className="text-xs text-gray-600">
                 <span className="font-medium">{t('tikhubConfig.costEstimate')}:</span>
                 <span className="ml-2 font-mono text-purple-600">
-                  ~¥{((tiktokConfig.maxVideos / 20 * 0.01 + (tiktokConfig.enableComments ? tiktokConfig.maxVideos * (tiktokConfig.maxCommentsPerVideo / 20) * 0.01 : 0)).toFixed(2))}
+                  ~${((tiktokConfig.maxVideos / 20 * 0.01 + (tiktokConfig.enableComments ? tiktokConfig.maxVideos * (tiktokConfig.maxCommentsPerVideo / 20) * 0.01 : 0)).toFixed(2))}
                 </span>
                 <span className="text-gray-400 ml-1">{t('tikhubConfig.perAnalysis')}</span>
               </div>
@@ -361,16 +361,16 @@ export default function AnalysisForm({ onSubmit, isLoading }: AnalysisFormProps)
               </svg>
             </div>
             <div className="flex-1">
-              <div className="text-sm font-bold text-[#18181B] mb-1">Bilibili API 配置</div>
-              <div className="text-xs text-gray-600 mb-3">哔哩哔哩数据源，基于 TikHub API</div>
+              <div className="text-sm font-bold text-[#18181B] mb-1">{t('tiktokConfig.title')}</div>
+              <div className="text-xs text-gray-600 mb-3">{t('tiktokConfig.description')}</div>
 
               {/* API 状态指示 */}
               <div className="flex items-center gap-2 text-xs">
                 <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full">
                   <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
-                  API 服务可用
+                  {t('tiktokConfig.statusAvailable')}
                 </span>
-                <span className="text-gray-500">按请求计费，约 ¥0.01/次</span>
+                <span className="text-gray-500">{t('tiktokConfig.pricing')}</span>
               </div>
             </div>
           </div>
@@ -380,7 +380,7 @@ export default function AnalysisForm({ onSubmit, isLoading }: AnalysisFormProps)
             <label className="flex items-center justify-between group cursor-pointer">
               <div className="pointer-events-none">
                 <span className="block text-sm font-medium text-[#18181B]">{t('douyinNewConfig.enableComments')}</span>
-                <span className="text-xs text-gray-500">获取弹幕/评论数据可提高分析准确性</span>
+                <span className="text-xs text-gray-500">{t('tiktokConfig.commentsNote')}</span>
               </div>
               <div className="relative inline-flex items-center">
                 <input
@@ -456,7 +456,7 @@ export default function AnalysisForm({ onSubmit, isLoading }: AnalysisFormProps)
               <div className="text-xs text-gray-600">
                 <span className="font-medium">{t('tikhubConfig.costEstimate')}:</span>
                 <span className="ml-2 font-mono text-pink-600">
-                  ~¥{((tiktokConfig.maxVideos / 42 * 0.01 + (tiktokConfig.enableComments ? tiktokConfig.maxVideos * (tiktokConfig.maxCommentsPerVideo / 20) * 0.01 : 0)).toFixed(2))}
+                  ~${((tiktokConfig.maxVideos / 42 * 0.01 + (tiktokConfig.enableComments ? tiktokConfig.maxVideos * (tiktokConfig.maxCommentsPerVideo / 20) * 0.01 : 0)).toFixed(2))}
                 </span>
                 <span className="text-gray-400 ml-1">{t('tikhubConfig.perAnalysis')}</span>
               </div>
@@ -475,16 +475,16 @@ export default function AnalysisForm({ onSubmit, isLoading }: AnalysisFormProps)
               </svg>
             </div>
             <div className="flex-1">
-              <div className="text-sm font-bold text-[#18181B] mb-1">微信视频号 API 配置</div>
-              <div className="text-xs text-gray-600 mb-3">微信视频号数据源，基于 TikHub API</div>
+              <div className="text-sm font-bold text-[#18181B] mb-1">{t('tiktokConfig.title')}</div>
+              <div className="text-xs text-gray-600 mb-3">{t('tiktokConfig.description')}</div>
 
               {/* API 状态指示 */}
               <div className="flex items-center gap-2 text-xs">
                 <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full">
                   <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
-                  API 服务可用
+                  {t('tiktokConfig.statusAvailable')}
                 </span>
-                <span className="text-gray-500">按请求计费，约 ¥0.01/次</span>
+                <span className="text-gray-500">{t('tiktokConfig.pricing')}</span>
               </div>
             </div>
           </div>
@@ -494,7 +494,7 @@ export default function AnalysisForm({ onSubmit, isLoading }: AnalysisFormProps)
             <label className="flex items-center justify-between group cursor-pointer">
               <div className="pointer-events-none">
                 <span className="block text-sm font-medium text-[#18181B]">{t('douyinNewConfig.enableComments')}</span>
-                <span className="text-xs text-gray-500">获取评论数据可提高分析准确性</span>
+                <span className="text-xs text-gray-500">{t('tiktokConfig.commentsNote')}</span>
               </div>
               <div className="relative inline-flex items-center">
                 <input
@@ -570,7 +570,7 @@ export default function AnalysisForm({ onSubmit, isLoading }: AnalysisFormProps)
               <div className="text-xs text-gray-600">
                 <span className="font-medium">{t('tikhubConfig.costEstimate')}:</span>
                 <span className="ml-2 font-mono text-emerald-600">
-                  ~¥{((tiktokConfig.maxVideos / 20 * 0.01 + (tiktokConfig.enableComments ? tiktokConfig.maxVideos * (tiktokConfig.maxCommentsPerVideo / 20) * 0.01 : 0)).toFixed(2))}
+                  ~${((tiktokConfig.maxVideos / 20 * 0.01 + (tiktokConfig.enableComments ? tiktokConfig.maxVideos * (tiktokConfig.maxCommentsPerVideo / 20) * 0.01 : 0)).toFixed(2))}
                 </span>
                 <span className="text-gray-400 ml-1">{t('tikhubConfig.perAnalysis')}</span>
               </div>
@@ -589,16 +589,16 @@ export default function AnalysisForm({ onSubmit, isLoading }: AnalysisFormProps)
               </svg>
             </div>
             <div className="flex-1">
-              <div className="text-sm font-bold text-[#18181B] mb-1">YouTube API 配置</div>
-              <div className="text-xs text-gray-600 mb-3">YouTube 数据源，基于 TikHub API</div>
+              <div className="text-sm font-bold text-[#18181B] mb-1">{t('tiktokConfig.title')}</div>
+              <div className="text-xs text-gray-600 mb-3">{t('tiktokConfig.description')}</div>
 
               {/* API 状态指示 */}
               <div className="flex items-center gap-2 text-xs">
                 <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full">
                   <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
-                  API 服务可用
+                  {t('tiktokConfig.statusAvailable')}
                 </span>
-                <span className="text-gray-500">按请求计费，约 ¥0.01/次</span>
+                <span className="text-gray-500">{t('tiktokConfig.pricing')}</span>
               </div>
             </div>
           </div>
@@ -608,7 +608,7 @@ export default function AnalysisForm({ onSubmit, isLoading }: AnalysisFormProps)
             <label className="flex items-center justify-between group cursor-pointer">
               <div className="pointer-events-none">
                 <span className="block text-sm font-medium text-[#18181B]">{t('douyinNewConfig.enableComments')}</span>
-                <span className="text-xs text-gray-500">获取评论数据可提高分析准确性</span>
+                <span className="text-xs text-gray-500">{t('tiktokConfig.commentsNote')}</span>
               </div>
               <div className="relative inline-flex items-center">
                 <input
@@ -684,7 +684,7 @@ export default function AnalysisForm({ onSubmit, isLoading }: AnalysisFormProps)
               <div className="text-xs text-gray-600">
                 <span className="font-medium">{t('tikhubConfig.costEstimate')}:</span>
                 <span className="ml-2 font-mono text-red-600">
-                  ~¥{((tiktokConfig.maxVideos / 20 * 0.01 + (tiktokConfig.enableComments ? tiktokConfig.maxVideos * (tiktokConfig.maxCommentsPerVideo / 20) * 0.01 : 0)).toFixed(2))}
+                  ~${((tiktokConfig.maxVideos / 20 * 0.01 + (tiktokConfig.enableComments ? tiktokConfig.maxVideos * (tiktokConfig.maxCommentsPerVideo / 20) * 0.01 : 0)).toFixed(2))}
                 </span>
                 <span className="text-gray-400 ml-1">{t('tikhubConfig.perAnalysis')}</span>
               </div>
@@ -703,16 +703,16 @@ export default function AnalysisForm({ onSubmit, isLoading }: AnalysisFormProps)
               </svg>
             </div>
             <div className="flex-1">
-              <div className="text-sm font-bold text-[#18181B] mb-1">小红书 API 配置</div>
-              <div className="text-xs text-gray-600 mb-3">小红书数据源，基于 TikHub API</div>
+              <div className="text-sm font-bold text-[#18181B] mb-1">{t('tiktokConfig.title')}</div>
+              <div className="text-xs text-gray-600 mb-3">{t('tiktokConfig.description')}</div>
 
               {/* API 状态指示 */}
               <div className="flex items-center gap-2 text-xs">
                 <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full">
                   <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
-                  API 服务可用
+                  {t('tiktokConfig.statusAvailable')}
                 </span>
-                <span className="text-gray-500">按请求计费，约 ¥0.01/次</span>
+                <span className="text-gray-500">{t('tiktokConfig.pricing')}</span>
               </div>
             </div>
           </div>
@@ -722,7 +722,7 @@ export default function AnalysisForm({ onSubmit, isLoading }: AnalysisFormProps)
             <label className="flex items-center justify-between group cursor-pointer">
               <div className="pointer-events-none">
                 <span className="block text-sm font-medium text-[#18181B]">{t('douyinNewConfig.enableComments')}</span>
-                <span className="text-xs text-gray-500">获取评论数据可提高分析准确性</span>
+                <span className="text-xs text-gray-500">{t('tiktokConfig.commentsNote')}</span>
               </div>
               <div className="relative inline-flex items-center">
                 <input
@@ -798,7 +798,7 @@ export default function AnalysisForm({ onSubmit, isLoading }: AnalysisFormProps)
               <div className="text-xs text-gray-600">
                 <span className="font-medium">{t('tikhubConfig.costEstimate')}:</span>
                 <span className="ml-2 font-mono text-rose-600">
-                  ~¥{((tiktokConfig.maxVideos / 20 * 0.01 + (tiktokConfig.enableComments ? tiktokConfig.maxVideos * (tiktokConfig.maxCommentsPerVideo / 20) * 0.01 : 0)).toFixed(2))}
+                  ~${((tiktokConfig.maxVideos / 20 * 0.01 + (tiktokConfig.enableComments ? tiktokConfig.maxVideos * (tiktokConfig.maxCommentsPerVideo / 20) * 0.01 : 0)).toFixed(2))}
                 </span>
                 <span className="text-gray-400 ml-1">{t('tikhubConfig.perAnalysis')}</span>
               </div>
@@ -907,7 +907,7 @@ export default function AnalysisForm({ onSubmit, isLoading }: AnalysisFormProps)
               <div className="text-xs text-gray-600">
                 <span className="font-medium">{t('tikhubConfig.costEstimate')}:</span>
                 <span className="ml-2 font-mono text-sky-600">
-                  ~¥{((tiktokConfig.maxVideos / 20 * 0.01 + (tiktokConfig.enableComments ? tiktokConfig.maxVideos * (tiktokConfig.maxCommentsPerVideo / 20) * 0.01 : 0)).toFixed(2))}
+                  ~${((tiktokConfig.maxVideos / 20 * 0.01 + (tiktokConfig.enableComments ? tiktokConfig.maxVideos * (tiktokConfig.maxCommentsPerVideo / 20) * 0.01 : 0)).toFixed(2))}
                 </span>
                 <span className="text-gray-400 ml-1">{t('tikhubConfig.perAnalysis')}</span>
               </div>
@@ -1016,7 +1016,7 @@ export default function AnalysisForm({ onSubmit, isLoading }: AnalysisFormProps)
               <div className="text-xs text-gray-600">
                 <span className="font-medium">{t('tikhubConfig.costEstimate')}:</span>
                 <span className="ml-2 font-mono text-orange-600">
-                  ~¥{((tiktokConfig.maxVideos / 25 * 0.01 + (tiktokConfig.enableComments ? tiktokConfig.maxVideos * (tiktokConfig.maxCommentsPerVideo / 20) * 0.01 : 0)).toFixed(2))}
+                  ~${((tiktokConfig.maxVideos / 25 * 0.01 + (tiktokConfig.enableComments ? tiktokConfig.maxVideos * (tiktokConfig.maxCommentsPerVideo / 20) * 0.01 : 0)).toFixed(2))}
                 </span>
                 <span className="text-gray-400 ml-1">{t('tikhubConfig.perAnalysis')}</span>
               </div>

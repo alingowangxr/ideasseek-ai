@@ -84,6 +84,7 @@ export class ClusteringService {
    */
   async cluster(texts: string[], options?: ClusteringOptions): Promise<ClusteringResult> {
     const startTime = Date.now();
+    const CLUSTER_TIMEOUT_MS = 5 * 60 * 1000; // 5分钟总超时
     this.steps = [];
 
     const opts = { ...this.defaultOptions, ...options };
@@ -91,10 +92,30 @@ export class ClusteringService {
     console.log(`[ClusteringService] 开始处理 ${texts.length} 条文本`);
     console.log(`[ClusteringService] 提供商: ${this.embeddingProvider.getName()} | 模型: ${this.embeddingProvider.getModel()}`);
 
+    try {
+      // 使用 Promise.race 添加整体超时控制
+      const result = await Promise.race([
+        this.runClustering(texts, opts, startTime),
+        new Promise<never>((_, reject) => {
+          setTimeout(() => reject(new Error(`Clustering timeout after ${CLUSTER_TIMEOUT_MS}ms`)), CLUSTER_TIMEOUT_MS);
+        })
+      ]);
+      return result;
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      console.error('[ClusteringService] 聚类失败:', errorMessage);
+      return this.createEmptyResult(texts.length, texts.length, Date.now() - startTime, errorMessage);
+    }
+  }
+
+  /**
+   * 执行聚类逻辑
+   */
+  private async runClustering(texts: string[], opts: ClusteringOptions, startTime: number): Promise<ClusteringResult> {
     // Step 1: 数据清洗
     let cleanTexts = texts;
     let cleanScores: number[] = [];
-    let originalCount = texts.length;
+    const originalCount = texts.length;
 
     if (opts.enableCleaning) {
       const cleanResult = this.step('数据清洗', () => {
@@ -278,7 +299,7 @@ export class ClusteringService {
   /**
    * 创建空结果
    */
-  private createEmptyResult(totalTexts: number, cleanedTexts: number, duration: number): ClusteringResult {
+  private createEmptyResult(totalTexts: number, cleanedTexts: number, duration: number, _error?: string): ClusteringResult {
     return {
       clusters: [],
       noise: [],
