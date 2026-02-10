@@ -1,6 +1,6 @@
 English | [中文](./README.md)
 
-# SeekMoney - User Pain Point Discoverer
+# IdeasSeek AI - User Pain Point Discoverer
 
 ![logo](./assets/logo.png)
 
@@ -103,8 +103,8 @@ All data sources are powered by TikHub API, providing unified and stable data co
 
 ```bash
 # Clone the project
-git clone https://github.com/your-username/SeekMoney-ai.git
-cd SeekMoney-ai
+git clone https://github.com/liangdabiao/ideasseek-ai.git
+cd ideasseek-ai
 
 # Install Node.js dependencies
 npm install
@@ -199,7 +199,7 @@ Visit http://localhost:3000
 ## Project Structure
 
 ```
-SeekMoney-ai/
+ideasseek-ai/
 ├── src/
 │   ├── app/
 │   │   ├── [locale]/             # Internationalized dynamic routes
@@ -464,3 +464,5 @@ A:
 ## License
 
 This project is licensed under the MIT License.
+
+This project is forked from [weiyf2/deeppoint-ai](https://github.com/weiyf2/deeppoint-ai). Thanks to the original author for open-sourcing this project.

@@ -1,6 +1,6 @@
 [English](./README.EN.md) | 中文
 
-# SeekMoney - 找商机：用户痛点发现器
+# IdeasSeek AI - 找商机：用户痛点发现器
 
 
 一个帮助创业者从社交媒体找商机，自动发现用户核心痛点的 Web 应用，支持智能聚类分析和产品方案生成。
@@ -107,8 +107,8 @@
 
 ```bash
 # 克隆项目
-git clone https://github.com/liangdabiao/SeekMoney-ai.git
-cd SeekMoney-ai
+git clone https://github.com/liangdabiao/ideasseek-ai.git
+cd ideasseek-ai
 
 # 安装 Node.js 依赖
 npm install
@@ -186,7 +186,7 @@ npm run start
 ## 项目结构
 
 ```
-SeekMoney-ai/
+ideasseek-ai/
 ├── src/
 │   ├── app/
 │   │   ├── [locale]/             # 国际化动态路由
