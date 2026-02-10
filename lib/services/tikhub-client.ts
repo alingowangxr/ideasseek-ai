@@ -1460,6 +1460,292 @@ export class TikHubAPIClient {
 
     return result;
   }
+  // ==================== Twitter (X) API 方法 ====================
+
+  /**
+   * Twitter 搜索推文
+   */
+  async searchTwitterPosts(params: {
+    keyword: string;
+    cursor?: string;
+  }): Promise<any> {
+    this.requestCount++;
+    this.searchRequests++;
+
+    const queryParams: any = {
+      keyword: params.keyword
+    };
+
+    if (params.cursor) {
+      queryParams.cursor = params.cursor;
+    }
+
+    try {
+      const response = await this.client.get(
+        '/api/v1/twitter/web/fetch_search_timeline',
+        { params: queryParams }
+      );
+
+      const data = response.data;
+
+      console.log('[Twitter API] 搜索响应详情:', {
+        code: data.code,
+        message: data.message,
+        hasData: !!data.data,
+        cacheUrl: data.cache_url
+      });
+
+      // 存储缓存
+      if (data.cache_url) {
+        const cacheKey = `twitter_search_${JSON.stringify(params)}`;
+        this.setCache(cacheKey, data, data.cache_url);
+      }
+
+      this.costEstimate += this.COST_PER_REQUEST;
+      return data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        throw new Error(
+          `Twitter API 搜索失败: ${error.response?.status} ${error.response?.data?.message || error.message}`
+        );
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * 获取 Twitter 推文评论
+   */
+  async getTwitterTweetComments(
+    tweetId: string,
+    cursor?: string
+  ): Promise<any> {
+    this.requestCount++;
+    this.commentsRequests++;
+
+    const queryParams: any = {
+      tweet_id: tweetId
+    };
+
+    if (cursor) {
+      queryParams.cursor = cursor;
+    }
+
+    try {
+      const response = await this.client.get(
+        '/api/v1/twitter/web/fetch_tweet_comments',
+        { params: queryParams }
+      );
+
+      const data = response.data;
+
+      console.log('[Twitter API] 评论响应详情:', {
+        code: data.code,
+        message: data.message,
+        commentCount: data.data?.comments?.length || 0,
+        cacheUrl: data.cache_url
+      });
+
+      if (data.cache_url) {
+        const cacheKey = `twitter_comments_${tweetId}_${cursor || 'first'}`;
+        this.setCache(cacheKey, data, data.cache_url);
+      }
+
+      this.costEstimate += this.COST_PER_REQUEST;
+      return data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        throw new Error(
+          `Twitter API 评论获取失败: ${error.response?.status} ${error.response?.data?.message || error.message}`
+        );
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * 批量获取 Twitter 推文评论
+   */
+  async getTwitterTweetCommentsBatch(
+    tweetIds: string[],
+    maxCommentsPerTweet: number
+  ): Promise<Map<string, any[]>> {
+    const result = new Map<string, any[]>();
+
+    for (const tweetId of tweetIds) {
+      try {
+        const comments: any[] = [];
+        let cursor = '';
+        let hasMore = true;
+
+        while (hasMore && comments.length < maxCommentsPerTweet) {
+          const response = await this.getTwitterTweetComments(
+            tweetId,
+            cursor
+          );
+
+          if (response.code !== 200 || !response.data?.comments) {
+            console.warn('[Twitter API] 评论响应格式不符合预期，停止获取评论');
+            break;
+          }
+
+          const commentList = response.data.comments;
+          comments.push(...commentList);
+
+          cursor = response.data?.cursor || '';
+          hasMore = cursor !== '' && commentList.length >= 10;
+
+          console.log(`[Twitter API] 已获取 ${comments.length} 条评论，has_more: ${hasMore}`);
+
+          await this.delay(300);
+        }
+
+        result.set(tweetId, comments);
+      } catch (error) {
+        console.error(`[Twitter API] Failed to fetch comments for ${tweetId}:`, error);
+        result.set(tweetId, []);
+      }
+    }
+
+    return result;
+  }
+
+  // ==================== Reddit API 方法 ====================
+
+  /**
+   * Reddit 搜索帖子
+   */
+  async searchRedditPosts(params: {
+    keyword: string;
+    sort?: 'relevance' | 'hot' | 'top' | 'new' | 'comments';
+    time?: 'all' | 'year' | 'month' | 'week' | 'day' | 'hour';
+    after?: string;
+  }): Promise<any> {
+    this.requestCount++;
+    this.searchRequests++;
+
+    const queryParams: any = {
+      keyword: params.keyword,
+      sort: params.sort || 'relevance',
+      time: params.time || 'month'
+    };
+
+    if (params.after) {
+      queryParams.after = params.after;
+    }
+
+    try {
+      const response = await this.client.get(
+        '/api/v1/reddit/search_posts',
+        { params: queryParams }
+      );
+
+      const data = response.data;
+
+      console.log('[Reddit API] 搜索响应详情:', {
+        code: data.code,
+        message: data.message,
+        hasData: !!data.data,
+        cacheUrl: data.cache_url
+      });
+
+      if (data.cache_url) {
+        const cacheKey = `reddit_search_${JSON.stringify(params)}`;
+        this.setCache(cacheKey, data, data.cache_url);
+      }
+
+      this.costEstimate += this.COST_PER_REQUEST;
+      return data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        throw new Error(
+          `Reddit API 搜索失败: ${error.response?.status} ${error.response?.data?.message || error.message}`
+        );
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * 获取 Reddit 帖子评论
+   */
+  async getRedditPostComments(
+    postId: string,
+    sort?: 'best' | 'top' | 'new' | 'controversial' | 'old'
+  ): Promise<any> {
+    this.requestCount++;
+    this.commentsRequests++;
+
+    const queryParams: any = {
+      post_id: postId,
+      sort: sort || 'top'
+    };
+
+    try {
+      const response = await this.client.get(
+        '/api/v1/reddit/fetch_post_comments',
+        { params: queryParams }
+      );
+
+      const data = response.data;
+
+      console.log('[Reddit API] 评论响应详情:', {
+        code: data.code,
+        message: data.message,
+        commentCount: data.data?.comments?.length || 0,
+        cacheUrl: data.cache_url
+      });
+
+      if (data.cache_url) {
+        const cacheKey = `reddit_comments_${postId}_${sort || 'top'}`;
+        this.setCache(cacheKey, data, data.cache_url);
+      }
+
+      this.costEstimate += this.COST_PER_REQUEST;
+      return data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        throw new Error(
+          `Reddit API 评论获取失败: ${error.response?.status} ${error.response?.data?.message || error.message}`
+        );
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * 批量获取 Reddit 帖子评论
+   */
+  async getRedditPostCommentsBatch(
+    postIds: string[],
+    maxCommentsPerPost: number
+  ): Promise<Map<string, any[]>> {
+    const result = new Map<string, any[]>();
+
+    for (const postId of postIds) {
+      try {
+        const response = await this.getRedditPostComments(postId);
+
+        if (response.code !== 200 || !response.data?.comments) {
+          console.warn('[Reddit API] 评论响应格式不符合预期');
+          result.set(postId, []);
+          continue;
+        }
+
+        const comments = response.data.comments.slice(0, maxCommentsPerPost);
+        result.set(postId, comments);
+
+        console.log(`[Reddit API] 帖子 ${postId} 获取 ${comments.length} 条评论`);
+
+        await this.delay(300);
+      } catch (error) {
+        console.error(`[Reddit API] Failed to fetch comments for ${postId}:`, error);
+        result.set(postId, []);
+      }
+    }
+
+    return result;
+  }
 }
 
 /**
