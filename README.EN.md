@@ -2,7 +2,7 @@ English | [中文](./README.md)
 
 # IdeasSeek AI - User Pain Point Discoverer
 
-![logo](./assets/logo.png)
+
 
 A web application that helps indie developers automatically discover user pain points from social media, with intelligent clustering analysis and AI-powered product solution generation.
 
@@ -436,33 +436,9 @@ A:
 - **preliminary (50-200)**: Medium confidence, suitable for initial research
 - **reliable (≥200)**: High confidence, statistically significant
 
-## Roadmap
-
-### Completed
-- [x] TikHub API data source support (8 platforms)
-- [x] Pain point clustering analysis
-- [x] AI product solution generation
-- [x] Deep crawling (with comments)
-- [x] Multi-language support (Simplified Chinese / Traditional Chinese / English)
-- [x] Data quality grading
-- [x] Priority scoring system
-- [x] Raw data export
-- [x] X (Twitter) platform support
-- [x] Reddit platform support
-- [x] YouTube V3 API upgrade (Shorts search, formatted data)
-- [x] Traditional Chinese (zh-TW) locale support
-
-### Planned
-- [ ] User history record saving
-- [ ] More data sources (Zhihu, Weibo, Instagram)
-- [ ] Trend analysis features
-- [ ] Competitor analysis module
-- [ ] Database persistence
-- [ ] User authentication system
-- [ ] Team collaboration features
 
 ## License
 
 This project is licensed under the MIT License.
 
-This project is forked from [weiyf2/deeppoint-ai](https://github.com/weiyf2/deeppoint-ai). Thanks to the original author for open-sourcing this project.
+This project is forked from https://github.com/weiyf2/deeppoint-ai & https://github.com/liangdabiao/SeekMoney-a Thanks to the original author for open-sourcing this project.
