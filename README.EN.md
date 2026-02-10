@@ -9,7 +9,7 @@ A web application that helps indie developers automatically discover user pain p
 **Core Features:**
 - Multi-platform data collection (Douyin, Xiaohongshu, TikTok, Bilibili, WeChat Channels, YouTube, X (Twitter), Reddit)
 - Semantic clustering based on GLM embedding-3 + DBSCAN algorithm
-- Deep analysis using GLM-4.6 thinking model
+- Deep analysis using GLM-4.7 thinking model
 - Intelligent priority scoring system (demand intensity + market size + competition)
 - Full trilingual support (Simplified Chinese / Traditional Chinese / English)
 
