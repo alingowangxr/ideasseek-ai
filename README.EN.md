@@ -79,7 +79,7 @@ All data sources are powered by TikHub API, providing unified and stable data co
 ### TikHub API Advantages
 - **Multi-Platform**: One API for 8 major platforms
 - **Stable & Reliable**: No crawler maintenance, avoids anti-crawling restrictions
-- **Pay Per Use**: ~¥0.01/request, 24-hour cache reduces costs
+- **Pay Per Use**: ~$0.01/request, 24-hour cache reduces costs
 - **Developer Friendly**: RESTful API with comprehensive documentation and SDKs
 - **Compliance**: Official API interface, avoids legal risks
 
@@ -181,7 +181,7 @@ Visit http://localhost:3000
 4. Click Start Analysis and wait for results
 5. Click any row to view detailed source content, or export CSV
 
-> **TikHub API Note**: Based on TikHub API data acquisition service, no login required, pay per use. Each analysis costs approximately ¥0.01-0.5, depending on data volume.
+> **TikHub API Note**: Based on TikHub API data acquisition service, no login required, pay per use. Each analysis costs approximately $0.01-0.5, depending on data volume.
 
 ### AI Product Suggestions (/ai-product)
 
@@ -328,7 +328,7 @@ Sorted Results → Frontend Display
 **Features**:
 - Multi-platform support: Douyin, Xiaohongshu, TikTok, Bilibili, WeChat Channels, YouTube, X (Twitter), Reddit
 - Stable & reliable: API interface, no anti-crawling risks
-- Pay per use: ~¥0.01/request
+- Pay per use: ~$0.01/request
 - 24-hour cache: Free repeat requests
 - Usage monitoring: Supports `getUsageStats()` method
 
@@ -390,14 +390,14 @@ OPENAI_BASE_URL=https://api.openai.com/v1     # Optional, supports proxy
 ## FAQ
 
 ### Q: How much does TikHub API cost?
-A: TikHub API charges per request, approximately ¥0.01/request. A typical analysis (3 keywords, 20 videos, 30 comments per video) costs about ¥0.5. Supports 24-hour caching, repeat access is free.
+A: TikHub API charges per request, approximately $0.01/request. A typical analysis (3 keywords, 20 videos, 30 comments per video) costs about $0.5. Supports 24-hour caching, repeat access is free.
 
 ### Q: Why is TikHub API recommended?
 A:
 - **Stability**: API interface, no anti-crawling risks
 - **Multi-platform**: One API for 6 major platforms
 - **Speed**: Fast response, no page loading wait
-- **Cost**: Pay per use, ~¥0.01/request
+- **Cost**: Pay per use, ~$0.01/request
 - **Compliance**: Official API interface, avoids legal risks
 - **Cache**: 24-hour cache, free repeat requests
 

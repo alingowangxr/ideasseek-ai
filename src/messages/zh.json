@@ -55,7 +55,7 @@
       "title": "TikHub API 配置",
       "description": "基于 TikHub API 的稳定数据获取服务，无需登录，按需付费",
       "statusAvailable": "API 服务可用",
-      "pricing": "按请求计费，约 ¥0.01/次",
+      "pricing": "按请求计费，约 $0.01/次",
       "commentsNote": "获取评论数据可提高分析准确性",
       "costEstimate": "预估成本",
       "perAnalysis": "/次分析"
